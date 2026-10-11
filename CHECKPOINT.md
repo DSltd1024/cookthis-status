@@ -1,3 +1,114 @@
+# Cookthis status
+
+The current checkpoint is followed by earlier reports, preserved as history. This public repository contains only checkpoint Markdown, never application code, credentials or private household data.
+
+# Phase 4 checkpoint, 2026-10-11
+
+The Kroger matcher update is deployed locally and the conductor acceptance scenarios pass. The app is running at http://localhost:3000. No public production deployment or live shopper checkout is claimed. This checkpoint stops before Phase 5.
+
+## Kroger package matching
+
+The latest certification catalog run matched 12 of 12 ingredients, up from 8 of 12. Eight use compatible package conversions. Four are explicit package guesses: apples, cinnamon, paprika and salt. Apples use a 250 g per-fruit estimate to select a labelled bag; small spice amounts use one standard package. The shopper sees the proposed product, package size, package count and reason under Check these package guesses.
+
+Exact conversions take priority. Loose produce sold by weight, unavailable stock, unknown package sizes, unrelated food products, oversized amounts and inappropriate spice forms remain rejected. Only UPC and package count go to Kroger; guess metadata stays in the Cookthis result.
+
+| Ingredient  | Amount | Lookup   | Time    | Match               | Packages |
+| ----------- | ------ | -------- | ------- | ------------------- | -------- |
+| apples      | 4 each | HTTP 200 | 1034 ms | Guessed package     | 1        |
+| green beans | 400 g  | HTTP 200 | 1201 ms | Convertible package | 1        |
+| lemon       | 1 each | HTTP 200 | 1705 ms | Convertible package | 1        |
+| potato      | 800 g  | HTTP 200 | 2370 ms | Convertible package | 2        |
+| butter      | 15 g   | HTTP 200 | 1608 ms | Convertible package | 1        |
+| brown sugar | 14 g   | HTTP 200 | 1020 ms | Convertible package | 1        |
+| oats        | 12 g   | HTTP 200 | 1358 ms | Convertible package | 1        |
+| olive oil   | 41 g   | HTTP 200 | 1755 ms | Convertible package | 1        |
+| water       | 100 g  | HTTP 200 | 2076 ms | Convertible package | 1        |
+| cinnamon    | 5 ml   | HTTP 200 | 1005 ms | Guessed package     | 1        |
+| paprika     | 5 ml   | HTTP 200 | 1100 ms | Guessed package     | 1        |
+| salt        | 5 ml   | HTTP 200 | 1097 ms | Guessed package     | 1        |
+
+All product requests returned HTTP 200. Client token: HTTP 200, 372 ms. Store lookup: HTTP 200, 249 ms. The empty-items cart authorization probe returned HTTP 403, 257 ms. No cart items were added. These are catalog matches, not customer-confirmed cart contents. Model and speech cost: $0.
+
+The registered callback is still on cookthis.app while this app runs on localhost. Customer OAuth and a reachable matching callback remain necessary for a real cart write. Instacart and other affiliate acceptance gates remain unchanged.
+
+## What works in the conductor
+
+Saved meals have Plan the night. The server takes a snapshot of recipes, scales the mise en place amounts, checks household equipment and stores a timeline in Postgres. Before cooking, opening Plan the night regenerates the unstarted plan from the saved meal. Once cooking starts, the snapshot stays stable.
+
+The scheduler respects sequential dependencies, active hands, passive appliance use, hob pools, air fryers and slow cookers. Same-temperature dishes can share an oven. Different oven temperatures get a ten-minute changeover. Recipe resting steps stay in the dependency chain. The cook checks that trays physically fit.
+
+The Plan screen has an ingredient/tool checklist, start countdown and whole-meal schedule. Starting early shifts the remaining plan. The Cook screen has one large current step, a timer, 72 px Done and Behind buttons, next-step context, other ready dishes and wake lock support. Behind adds twelve minutes. The server replans unfinished work and explains a serve-time change.
+
+Sessions survive refresh, closed tabs and a new signed-in device. Version checks reject stale actions from another screen. The browser renders the server plan and does not generate a schedule. Once loaded, its shell and last snapshot can reopen offline. Offline actions are disabled, the clock snapshot is labelled stale, and the complete saved timeline is visible until reconnection.
+
+Per-device Web Push subscriptions and BullMQ timer jobs are implemented. Timer jobs recheck the stored step end before sending. The worker recovers reminders up to five minutes overdue, suppresses obsolete reminders, and removes expired device endpoints. A notification opens the saved cooking session. Local VAPID keys were generated into ignored .env only. Live phone delivery has not been verified.
+
+End-of-cook feedback is stored with the session and linked back to recipe corrections. Sessions, device subscriptions and notification records have household ownership and row-level protection and are removed by household deletion. Direct authenticated database writes cannot change conductor plans.
+
+## Acceptance measurements
+
+The browser signs in with real local Supabase magic-link email. The scheduling fixtures are explicitly labelled Cookthis tests. They contain roast chicken, potatoes and greens, plus a dessert baked earlier at a different temperature. The browser uses the real web API and database with a server-only 60x clock on the isolated test origin. The test completes seven steps, injects the delay in the late scenario, checks every pair of blocks for conflicts, reloads offline and reconnects, then records feedback.
+
+| Scenario        | Speed | Steps completed | Dish finish spread | Maximum distance from serve time | Serve shift | Read p50 / p95 | Oven conflicts |
+| --------------- | ----- | --------------- | ------------------ | -------------------------------- | ----------- | -------------- | -------------- |
+| on time         | 60x   | 7               | 0.415 min          | 0.415 min                        | 0.750 min   | 44 / 59 ms     | 0              |
+| 12-minute delay | 60x   | 7               | 0.402 min          | 0.402 min                        | 12.801 min  | 44 / 59 ms     | 0              |
+
+Each hot dish finished within five minutes of the stored serve time. Small serve shifts in the on-time run include real request and polling latency magnified by the 60x clock. The delayed run preserves the recipe's cooking and resting durations. Read latency is local API latency, not a Lighthouse result or an end-to-end phone rendering benchmark. No model calls are needed to run or replan this fixture.
+
+| Check                        | Result                                                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Unit suite                   | 241 passed                                                                                                                |
+| Line coverage                | 98.45% overall, 98.20% timeline, 100% shopping merge, 99.22% grocery adapters                                             |
+| Type checks                  | Passed across packages and test code                                                                                      |
+| Production builds            | Web and worker passed, including Docker images                                                                            |
+| Database integration         | RLS, conductor write protection, device isolation and cascading deletion passed                                           |
+| Full browser suite           | 52 passed, 24 intentional duplicate-scenario skips                                                                        |
+| Conductor acceptance         | Both 60x scenarios passed, including the 12-minute delay and offline reload                                               |
+| Timer integration            | Real Postgres and BullMQ, injected push transport; overdue recovery, stale-job suppression and duplicate avoidance passed |
+| Visual baselines             | Plan and Cook on phone/tablet in light/dark, macOS and Linux; meal baselines updated for Plan the night                   |
+| Local deployment             | New web and worker images running; web, worker and Redis healthy                                                          |
+| Live Kroger catalog matching | 12/12 accepted, including four labelled package guesses; customer cart write still blocked                                |
+
+The deployed localhost:3000 meal-save regression passed separately with actual local email sign-in, refresh and reopening (1 test, 2.5 seconds). Linux visual verification against the deployed containers passed all eight checks (4.0 seconds). The real signed-in in-app browser also opened the saved test dinner and generated its plan.
+
+An earlier browser run failed on an ambiguous test selector that also matched Next.js's route announcer. The selector was corrected. A subsequent test-report write failed because simultaneous visual and full runs shared an output directory. The final full suite was rerun separately and passed; future separate checks use distinct output folders. These were not hidden or counted as successful full runs.
+
+## Reproduce
+
+```sh
+pnpm typecheck
+pnpm test:coverage
+pnpm test:database
+pnpm build
+pnpm exec tsx apps/worker/scripts/check-cook-timers.ts
+pnpm test:e2e
+pnpm exec tsx --env-file=.env scripts/kroger-live.ts
+```
+
+Local Supabase and the test Redis on port 6382 must be running for integration checks. Run the timer integration with no active local cook session; it injects the notification sender and sends no external message. The full browser configuration enables 60x only on localhost:3100. Normal localhost:3000 and production use real time.
+
+To try the app, open a saved meal at http://localhost:3000, choose Plan the night, check the mise en place list and start cooking. Household equipment is editable in Account. The existing saved-meal race regression is retained.
+
+## Limits and next phase
+
+- Kroger customer OAuth, callback reachability and a real shopper cart write remain blocked. A 12/12 catalog result is not a verified order. Other grocers still need their approved credentials or affiliate links.
+- Real phone push delivery is unverified. Web Push is best effort, and a closed tab does not guarantee the operating system will show a reminder immediately.
+- Oven temperature sharing assumes the cook checks tray capacity. There is no automatic tray-size model.
+- The engine exposes prep-ahead output for explicitly marked steps. Existing recipes without this metadata show guidance to consult the recipe; automatic generation of day-before cooking/storage instructions is not implemented. Unverified warm-holding advice is not invented.
+- Offline mode displays the last saved plan and clock snapshot. It does not accept offline completions or invent a revised schedule.
+- Helpers, task acknowledgement, voice and the read-only Gantt second screen are Phase 5. Billing and creators are Phase 6. Full PWA sharing, lifecycle email, legal pages and fresh-VM launch acceptance are Phase 7.
+- Phase 1's independent ingredient/quantity accuracy acceptance and prior live partner limitations remain as recorded in earlier checkpoints. No new 20-video extraction run was performed here.
+
+Next: Phase 5, helper invitations, per-person tasks, acknowledgement fallback, voice controls and the live second screen. Wait for the operator's continue instruction.
+
+
+---
+
+# Historical checkpoint, published 2026-10-11 at 18:10 UTC
+
+The material below is historical. Its references to Phase 4 not having started and to eight Kroger matches have been superseded by the current checkpoint above. Earlier extraction tables are preserved; they were not rerun for this update.
+
 # Cookthis checkpoint channel
 
 This repository contains timestamped checkpoint Markdown files and CHECKPOINT.md as the latest copy. No application code, credentials, tokens, raw logs or private household data are published.
