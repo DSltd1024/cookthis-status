@@ -1,3 +1,120 @@
+# Phase 5 checkpoint: helpers and voice
+
+2026-10-11. Phase 5 is implemented and running at http://localhost:3000. Automated checks and real MiMo calls passed. Physical-phone push delivery and microphone recognition are still unverified. The public production deployment is not complete. Stop here before Phase 6.
+
+## What works
+
+- The cook creates a private invitation for each helper. A helper joins with a display name only, with no email or account. Invitations expire after seven days. Only the access hash is stored; the browser exchanges the URL fragment for an HttpOnly, same-site cookie scoped to that helper's API.
+- The cook assigns a saved recipe step. The server makes it available when its scheduled start and prerequisites are reached. Ack moves that task to the helper; Done updates the same stored cooking session, replans through the engine, and appears on the cook's screen and second screen.
+- Unanswered tasks return to the cook after two minutes. Browser reads and background workers use the same transition rule. With every tab closed, the worker reconciles every five seconds and queues notifications in BullMQ.
+- Per-device helper subscriptions support more than one phone or browser. Only supported push hosts are accepted. Expired endpoints are removed. Household deletion removes invitations and subscriptions; exports include helper records without capability hashes.
+- Reopening a plan with invitations preserves that plan, preventing ordinary navigation from invalidating links. The plan is a saved recipe snapshot once invitations exist.
+- Hands-free mode recognizes Next, Repeat and Behind. Next and Behind use versioned server actions. Behind adds twelve minutes. Questions cannot mutate timers or tasks.
+- Spoken questions use the configured MiMo model with the saved plan, recipes and explicit server-computed minutes remaining. Numeric food safety information comes from a fixed FoodSafety.gov note. Recipe oven settings remain separate from internal doneness temperatures.
+- Tap to talk records at most ten seconds and transcribes with the configured MiMo audio model. Recordings stay in memory only. Browser speech synthesis is primary, with verified mimo-v2.5-tts synthesis as fallback. All controls remain available by tap and keyboard.
+- The second screen is a signed-in, read-only Gantt timeline. It polls the server every second and displays the server time, assignments, equipment and completion state.
+- The updated web and worker images were built and deployed locally. Migration 0008 is applied. The in-app browser displays the deployed timeline for a saved three-dish Cookthis test meal.
+
+## Verification
+
+| Check                             | Result                | Scope                                                                                                                             |
+| --------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript                        | Passed                | Web, worker, shared code, grocery adapters and tests                                                                              |
+| Unit tests                        | 248 passed            | Includes helper transitions, pinned assignments, exact voice commands and MiMo request contracts                                  |
+| Measured line coverage            | 98.48%                | Configured core modules, not a whole-application coverage claim                                                                   |
+| Helper state/commands coverage    | 100%                  | Lines and branches in the pure shared team module                                                                                 |
+| Real Supabase checks              | Passed                | Household isolation, direct-write denial, derived helper ownership and cascading deletion                                         |
+| Full browser suite                | 57 passed, 27 skipped | Skips are intentional duplicates across device projects                                                                           |
+| Two-browser helper scenario       | Passed                | Real local Supabase email sign-in for the cook; separate anonymous phone-sized context for the helper                             |
+| Invitation persistence regression | Passed                | Reopen Plan after creating an invitation, retain the same session and working link                                                |
+| Helper Ack fallback               | Passed                | Two-minute server deadline, stale Ack rejected, task returned to cook                                                             |
+| Voice Next                        | Passed                | Controlled browser recognition event through the real authenticated endpoint and database                                         |
+| Helper Done and second screen     | Passed                | Completion survives refresh and appears on the read-only timeline                                                                 |
+| Push worker integration           | Passed                | Real Postgres and BullMQ, two device subscriptions, injected push transport, stale suppression and no duplicate on reconciliation |
+| No-tab fallback                   | Passed                | Worker transitions an overdue unacknowledged task with no browser polling                                                         |
+| Production builds                 | Passed                | Next.js, worker and both Docker images                                                                                            |
+| macOS visual checks               | Passed                | Plan, Cook, Helper and second screen, phone/tablet, light/dark                                                                    |
+| Linux visual checks               | Passed                | Same four screens against deployed containers, 8 checks covering 16 snapshots                                                     |
+| Physical-phone push               | Not run               | No claim that a notification reached a real phone                                                                                 |
+| Physical microphone recognition   | Not run               | Browser event contract and live MiMo audio were tested separately                                                                 |
+
+The full browser suite ran in 2.9 minutes. A final focused two-browser rerun after the invitation-persistence fix passed in 10.1 seconds. Tests use the isolated localhost:3100 server; production has no client-controlled clock override.
+
+## Three-dish conductor regression at 60x
+
+| Scenario                 | Completed steps | Dish finish spread | Maximum distance from serve time | Serve time shift | Read p50 | Read p95 | Oven conflicts |
+| ------------------------ | --------------: | -----------------: | -------------------------------: | ---------------: | -------: | -------: | -------------: |
+| On time                  |               7 |          0.374 min |                        0.374 min |        0.792 min |    36 ms |    78 ms |              0 |
+| Injected 12-minute delay |               7 |          0.389 min |                        0.389 min |       12.750 min |    36 ms |    66 ms |              0 |
+
+Both runs include three hot dishes and a dessert baked earlier. They passed the five-minute serving window. These are local server measurements; they do not certify mobile-network latency or Lighthouse scores.
+
+## Live MiMo verification
+
+Measured at 2026-10-11 18:52 UTC. `/v1/models` returned HTTP 200 and confirmed this account supports mimo-v2.6-pro and mimo-v2.5-tts. Text and audio use the configured mimo-v2.6-pro. The audio test transcribed synthetic speech made for this check, not a person's microphone recording.
+
+| Call                | Outcome                                     |    Time | Input tokens | Output tokens | Estimated USD |
+| ------------------- | ------------------------------------------- | ------: | -----------: | ------------: | ------------: |
+| Cooking question    | Correctly answered 6 minutes remaining      | 3.206 s |          246 |            42 |    0.00014355 |
+| Speech synthesis    | Returned 99,884 bytes of WAV audio          | 3.084 s |          158 |            15 |      Unpriced |
+| Audio transcription | Returned “Repeat the current cooking step.” | 3.785 s |           48 |            14 |    0.00003306 |
+
+Estimates use the configured rates, without cache discounts, and are not billing receipts. TTS rates are blank, so no zero-cost claim is made. TTS token counts are retained. No new twenty-video extraction benchmark or grocery order was run in this phase.
+
+## Fixes made during verification
+
+- The app's existing Permissions-Policy disabled microphones. It now permits microphone access on the same origin, with explicit browser permission.
+- The first live model answer treated an epoch value as unclear timing. The route now supplies authoritative minutes remaining and an ISO server time. The subsequent live answer correctly reported six minutes.
+- An unstarted plan previously regenerated when reopened. Plans with invitations now preserve the session so links survive; a browser regression covers it.
+- The second screen initially repeated the Gantt as a full list. It now shows one timeline with a server-time marker and readable step labels.
+- Voice recordings have a server-checked size and PCM format, same-origin protection and a per-household request limit. Priced voice calls share the daily model budget; missing usage or rates are counted explicitly.
+
+## How to test
+
+With dependencies installed, local Supabase running and test Redis available on port 6382:
+
+```sh
+pnpm db:local
+pnpm typecheck
+pnpm test:coverage
+pnpm test:database
+pnpm build
+docker compose -f infra/compose.test.yml up -d --wait
+pnpm exec tsx apps/worker/scripts/check-cook-timers.ts
+pnpm exec tsx apps/worker/scripts/check-helper-tasks.ts
+pnpm test:e2e
+pnpm exec playwright test tests/e2e/helpers-voice.spec.ts --project=phone-light
+pnpm exec tsx --env-file=.env scripts/check-voice-live.ts
+```
+
+Run the worker integration checks with no active local cook. They inject the push sender and do not contact a phone. The final command makes paid API calls and writes an ignored local report.
+
+For the UI, sign in through the normal email link, open a saved meal and Plan the night. Create a helper invitation and open it in a separate browser profile. Enter a display name, then assign a step from the cook's screen. Start the cook when ready. Ack and Done work from the helper page. Skip Ack on another task to check the two-minute fallback. Open live second screen on a tablet signed into the same household. Enable hands-free voice on the cook's screen, or use Tap to talk or the typed command field.
+
+## Known limitations and remaining launch checks
+
+- Two browser contexts are not two physical phones. Real OS push delivery, background restrictions and noisy-kitchen speech recognition still need a device acceptance run on HTTPS. iOS push needs an installed home-screen web app, completed in Phase 7.
+- Push is best effort. An ambiguous retry may duplicate a notification; stable tags replace previous cards where supported. The plan and fallback never depend on successful push delivery.
+- Helpers are session-scoped guests. They are not permanent email household accounts. Keep each invitation private; it remains valid for seven days.
+- Delegation is explicit. Cookthis does not silently assign a hot-oven task to a household member. Future unassigned tasks retain their conservative cook reservation; acknowledged tasks can free the cook's hands when the engine replans.
+- Recipe edits made after inviting helpers do not rewrite that plan. The current saved plan is authoritative for the cooking session.
+- Browser speech recognition may use the browser vendor's service. Tap to talk uses MiMo. The interface discloses the distinction and retains typing and buttons.
+- TTS pricing is unverified. Fill the configuration from the operator's MiMo console; unpriced calls are counted and are never reported as free.
+- Phase 1 independent extraction-reference review remains open. The historical reliability results are unchanged.
+- Kroger catalog matching previously reached 12/12, including four package guesses. Customer OAuth/cart write remains blocked by the public callback versus localhost origin. Instacart approval and affiliate configuration are still required. No attributed order is claimed.
+- Public deployment, fresh-VM verification, PWA/share-target completion and physical mobile acceptance remain Phase 7.
+
+## Next
+
+Stop at this checkpoint. On “continue”, Phase 6 adds household premium and the card-free trial, Stripe Checkout and signed webhooks, operator reporting, affiliate reconciliation, creator claiming, media kits and the outreach helper. No Phase 6 implementation was started.
+
+
+---
+
+# Historical checkpoints and result tables
+
+The following reports are retained unchanged as historical evidence. They are not new extraction, grocery or deployment measurements. The Phase 5 report above is the current status.
+
 # Cookthis status
 
 The current checkpoint is followed by earlier reports, preserved as history. This public repository contains only checkpoint Markdown, never application code, credentials or private household data.
