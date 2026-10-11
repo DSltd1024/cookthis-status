@@ -1,10 +1,103 @@
 # Cookthis checkpoint channel
 
+This public repository contains only CHECKPOINT.md. Application code, credentials, raw logs and private household data are not published here.
+
+## Current checkpoint, 2026-10-11
+
+The meal save race is fixed and deployed at localhost:3000. Phase 3 shopping is implemented and checked locally. Live partner acceptance is blocked on the operator's grocery credentials and programme approval. Work stops here before Phase 4.
+
+Application commits: f292a55 (meal persistence), cb5f82a (merge and grocery adapters), b0f8b0e (shopping flow and tests), a46cfd7 (checkpoint and runbook). This status repository contains none of that application code.
+
+## Phase 3, shopping
+
+The shopping implementation is built. Live partner acceptance is blocked on operator credentials and programme approval. No live cart or commission is claimed.
+
+## What works
+
+Recipe Shop opens an account-free list preview. Open grocery list creates the merged, aisle-grouped shopping screen. Shop all creates the same screen from a saved meal. Save meal is required before Shop all, so shopping cannot quietly use an older meal.
+
+Ingredients scale with the shared decimal maths, reconcile compatible units using known densities, and round only after merging. Ranges shop for the upper amount. Pan-bound recipes buy enough batches. Unknown densities remain separate. Pantry staples stay visible but unchecked; copy, share and print use the selected amounts.
+
+The server validates original recipe evidence and review patches before creating a list. Guessed quantities, ranges and alternatives block a cart. Shopping and cart amounts are immutable database snapshots. Household lists remain until household deletion; guest lists expire after seven days and are pruned by server maintenance. Anonymous access uses a random capability held on the device. RLS isolates household lists, carts, pantry and clicks. Household JSON export includes them; deletion cascades through them and removes queued cart work and cached connections.
+
+Cart jobs use BullMQ. The worker keeps outcomes in Redis for seven days; the web process persists queued outcomes every minute even if the browser closes. Kroger cart writes are not automatically retried because a lost response could mean the products were already added. Reopening a list resumes its latest cart result. Each outgoing link records a separate click. Attribution uses a random cart ID, never a household identifier or email.
+
+## Provider behavior
+
+| Provider            | Implemented behavior                                                                                | Live verification                                  |
+| ------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Kroger, US          | OAuth, nearby stores, product matching, whole-package quantities, Cart API, unmatched list          | Blocked, no client ID/secret                       |
+| Instacart, US/CA    | Developer recipe-page endpoint when a key exists; otherwise approved Impact ingredient search links | Blocked, no key or approved link                   |
+| Walmart, US         | Approved Impact ingredient search links                                                             | Blocked, no approved link                          |
+| Amazon Fresh, US/UK | Tagged ingredient searches                                                                          | Isolated test tag only; no live account configured |
+| Ocado, UK           | Awin ingredient search links                                                                        | Blocked, no publisher/advertiser IDs               |
+| Other countries     | Copy, share and print                                                                               | Implemented                                        |
+
+Affiliate links are labelled searches, never filled carts. Instacart's documented recipe-page response does not contain a matched-item count, so it remains unknown. Kroger returns the measured matched count and explicitly lists every unmatched ingredient. The requested Instacart greater-than-80% acceptance needs a real approved account and a manual check at a chosen store. Current application availability has not been assumed.
+
+Kroger's public cart API does not itself establish an affiliate commission. Approved tracking links and programme contracts determine whether commissions are payable. Nightly conversion reconciliation and the operator dashboard remain Phase 6, as specified by the build order; the provider reporting interface is ready for that work.
+
+## Verified checkpoint, 2026-10-11
+
+| Check                               | Result                                                                                                                      |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Unit tests                          | 231 passed                                                                                                                  |
+| Measured line coverage              | 98.34% overall, 100% shopping merge, 99% grocery adapters, 98.75% scaling                                                   |
+| Type checks                         | Passed across all four packages and test code                                                                               |
+| Database checks                     | Passed with real local Supabase, including shopping RLS, immutable amounts, click isolation and cascading deletion          |
+| Full browser suite                  | 46 passed, 18 intentional skips for duplicate integration scenarios across viewport projects                                |
+| Live localhost:3000 meal regression | 1 passed with actual Supabase email authentication, held real save request, refresh and reopening; no model stub started    |
+| Grocery browser integration         | Real queue, worker and Postgres passed with test-only affiliate configuration; external navigation intercepted, no purchase |
+| Grocery safety browser check        | Unreviewed amounts blocked; browser-supplied line items ignored; cross-origin creation rejected                             |
+| Kroger browser contract             | Store selection and unmatched list passed using explicit API fixtures                                                       |
+| Shop visual baselines               | Phone and tablet, light and dark, macOS and Linux; eight baselines                                                          |
+| Worker and web production builds    | Passed, including Docker images                                                                                             |
+| Local container health              | Web, worker and Redis running; localhost:3000/healthz reports ok                                                            |
+| Offline extraction regressions      | Three original Cookthis fixtures passed, not a new live 20-video accuracy run                                               |
+| Live grocery acceptance             | Blocked on partner credentials; no live Instacart match percentage or order attribution claimed                             |
+
+The original meal-loss report was investigated in a real browser using live MiMo extraction and actual Supabase email sign-in. A completed ordinary save survived refresh. The reproduced defect was specifically edits made during a pending save: the old response erased those newer edits. The regression failed before the repair and passes afterwards. The exact timing of the operator's original incident is not observable.
+
+The same signed-in browser now opens the saved three-dish meal's combined list. Olive oil merges into one line, and the pantry exclusion survives refresh. No live grocer was contacted from this check.
+
+## Tests
+
+```sh
+pnpm typecheck
+pnpm test:coverage
+pnpm test:fixtures
+pnpm test:database
+pnpm build
+pnpm test:e2e
+E2E_EXTERNAL=1 E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test tests/e2e/meal-persistence.spec.ts --project=phone-light
+```
+
+The grocery unit suite uses fixed product/API fixtures. The browser grocery test uses the real queue, database and worker with an isolated test-only Amazon tag. It intercepts the final external navigation, makes no purchase, and verifies the recorded click in Postgres. Browser sign-in tests use real local Supabase magic-link emails, not an auth stub. Phase 1's existing live results remain historical; no new model-accuracy claim is made here.
+
+## Known limitations and next step
+
+Live grocery acceptance remains blocked on the credentials listed above. A provider search link does not fill a cart. Kroger matching deliberately rejects uncertain package sizes and related products such as sauces; shoppers must check brands, allergies, package sizes and substitutions with the grocer. Kroger access tokens expire after at most 30 minutes and require reconnecting. Grocery results held through a web outage longer than seven days cannot be recovered automatically; check the grocer before retrying.
+
+Stop here for the Phase 3 checkpoint. Phase 4 is the meal conductor, oven scheduling, server clock and delay-replanning test, after the operator says continue.
+
+
+## Publication and continuation
+
+The Linux Shop baselines were checked again without updating them: four passed. Web, worker and Redis containers are healthy. No live grocery purchase was made. All current changes are committed in the local application repository. The status document is pushed separately.
+
+Next after continue: Phase 4, the conductor. Live Phase 3 partner acceptance remains an explicit unmet gate until credentials are configured and real store matches and attribution are verified. Existing Phase 1 live accuracy caveats below remain unchanged.
+
+---
+
+# Earlier checkpoint record
+
+# Cookthis checkpoint channel
+
 This public repository contains only this status document. Application code, credentials, raw logs and private data are not published here.
 
-## Current checkpoint
+## Historical checkpoint before Phase 3
 
-The meal persistence fix is deployed locally. Phase 3 is authorized and now starting. This public document contains status only; no application code, authentication links, credentials or private household data are published.
+At this earlier checkpoint, the meal persistence fix was deployed locally and Phase 3 was starting. This public document contains status only; no application code, authentication links, credentials or private household data are published.
 
 ## Meal persistence fix, 2026-10-11
 
