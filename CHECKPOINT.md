@@ -1,8 +1,75 @@
 # Cookthis checkpoint channel
 
+This repository contains only CHECKPOINT.md. No application code, credentials, tokens, raw logs or private household data are published.
+
+## Current checkpoint
+
+Kroger certification credentials are configured locally and catalog checks succeed. The actual customer-cart test is blocked on a matching, reachable callback and customer OAuth sign-in. Application commit: 11865af. Phase 4 has not started.
+
+## Kroger certification checkpoint, 2026-10-11
+
+The supplied client ID and secret are saved only in the ignored, owner-readable `.env` file. HTML whitespace from the pasted credentials was removed. Neither credentials nor access tokens are included in this report or committed files. The test used Kroger certification, not production.
+
+The client token, store lookup and all twelve product lookups succeeded. The matcher accepted 8 of 12 ingredients, 66.7%, below the 80% target. These are algorithmic catalog matches, not a verified shopper cart. No customer cart was filled and no order was placed.
+
+| Live check | HTTP status | Time | Result |
+| --- | --- | --- | --- |
+| Client token | 200 | 446 ms | Token received; held in memory only. |
+| Store lookup, test ZIP 45202 | 200 | 451 ms | A certification store was returned. |
+| Cart authorization probe, empty items | 403 | 266 ms | Client-credentials token only. No customer authorization token and no items submitted. |
+| Registered callback reachability | No response | 8 s timeout | Both the callback and /healthz timed out from this machine. |
+
+| Ingredient | Shopping amount | Product lookup | Lookup time | Matcher accepted | Packages |
+| --- | --- | --- | --- | --- | --- |
+| apples | 4 each | HTTP 200 | 2975 ms | No, buy separately | Not determined |
+| green beans | 400 g | HTTP 200 | 2092 ms | Yes | 1 |
+| lemon | 1 each | HTTP 200 | 2695 ms | Yes | 1 |
+| potato | 800 g | HTTP 200 | 1829 ms | Yes | 2 |
+| butter | 15 g | HTTP 200 | 2135 ms | Yes | 1 |
+| brown sugar | 14 g | HTTP 200 | 1543 ms | Yes | 1 |
+| oats | 12 g | HTTP 200 | 1523 ms | Yes | 1 |
+| olive oil | 41 g | HTTP 200 | 1167 ms | Yes | 1 |
+| water | 100 g | HTTP 200 | 1534 ms | Yes | 1 |
+| cinnamon | 5 ml | HTTP 200 | 1371 ms | No, buy separately | Not determined |
+| paprika | 5 ml | HTTP 200 | 1199 ms | No, buy separately | Not determined |
+| salt | 5 ml | HTTP 200 | 1308 ms | No, buy separately | Not determined |
+
+The test uses the three original Cookthis test recipes at four servings, a merged shopping list and test ZIP 45202. Lookup times are individual request measurements, not end-to-end cart latency. No model or speech calls were made, so model/STT spend for this test was $0.
+
+### Blockers to the full cart test
+
+1. A client-credentials token grants catalog access, not permission to modify a shopper's cart. The empty-item Cart API probe returned HTTP 403. It was an authorization probe, not an attempted ingredient addition. Customer authorization through Kroger sign-in is still needed.
+2. Cookthis is running at `http://localhost:3000`, while the supplied registered callback is `https://cookthis.app/api/grocery/kroger/callback`. The public callback did not respond during this check. OAuth state cookies cannot complete across those different origins. Either deploy Cookthis at the registered public origin, or register `http://localhost:3000/api/grocery/kroger/callback` in the Kroger application and use that exact local redirect setting. Then complete customer sign-in.
+3. Apples, cinnamon, paprika and salt were not accepted by the current conservative matcher. They remain explicit unmatched items. No density, package size or match was invented to reach 80%.
+
+### Code and verification
+
+Added a fixed production/certification environment switch across OAuth, product, store and cart requests. Unknown environments are rejected. Customer tokens are isolated by environment. Certification results never link to a production cart. Callback-origin mismatch is rejected before starting OAuth. A zero-match result states that nothing was added.
+
+| Engineering check | Result |
+| --- | --- |
+| Unit suite | 233 passed |
+| Line coverage | 98.38% overall, 99.10% grocery adapters, 100% environment configuration |
+| Type checks | Passed |
+| Web and worker production build | Passed |
+| Live certification diagnostic | Completed with the blockers above; customer cart acceptance NOT passed |
+
+Reproduce the read-only diagnostic with `pnpm exec tsx --env-file=.env scripts/kroger-live.ts`. It calls the Cart API only with an empty item list to inspect authorization; it never adds products. Then run `pnpm test:coverage`, `pnpm typecheck` and `pnpm build`.
+
+The certification configuration changes are built and tested in the repository. The existing localhost containers were not restarted with the new credentials while the callback-origin mismatch remains unresolved. No secrets were copied to preview environment files or test fixtures.
+
+Next: make one registered callback reachable at the same origin as Cookthis, complete Kroger customer sign-in, and rerun a real certification cart write with the reviewed list. Phase 4 has not started. Other provider gates and historical results below remain unchanged.
+
+
+---
+
+# Historical checkpoints and tables
+
+# Cookthis checkpoint channel
+
 This public repository contains only CHECKPOINT.md. Application code, credentials, raw logs and private household data are not published here.
 
-## Current checkpoint, 2026-10-11
+## Historical Phase 3 checkpoint, before Kroger credentials
 
 The meal save race is fixed and deployed at localhost:3000. Phase 3 shopping is implemented and checked locally. Live partner acceptance is blocked on the operator's grocery credentials and programme approval. Work stops here before Phase 4.
 
