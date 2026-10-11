@@ -1,0 +1,251 @@
+# Cookthis checkpoint channel
+
+This public repository contains only this status document. Application code, credentials, raw logs and private data are not published here.
+
+## Current stop
+
+Status channel setup is complete on 2026-10-11. GitHub CLI is authenticated, and this public repository is dedicated to CHECKPOINT.md only. The full Phase 2 checkpoint and the historical Phase 1 checkpoint, live result tables, costs and failure ledger appear below.
+
+Phase 2 is complete locally. Product work remains stopped before Phase 3 until the operator says continue. No additional product work or live model validation was performed during status-channel setup.
+
+At every future checkpoint and whenever work stops, the full summary and result tables will be written here and pushed. Publishing checks reject extra files and recognizable or configured credentials. Application code and publishing tools remain in the separate development repository.
+
+The localhost addresses below work only on the operator's computer. There is no public Cookthis application deployment yet. Historical statements about the next phase describe their earlier checkpoint, not current progress.
+
+---
+
+# Phase 2 checkpoint
+
+Date: 2026-10-11. Recipe and meal acceptance passed locally. Stopped before Phase 3.
+
+## What works
+
+- Anonymous paste, review of uncertain fields, editing, servings and metric/imperial conversion, with a printable shopping preview.
+- Account creation only at Add to meal. Pending edits and six-person scaling survive real Supabase email sign-in in the same browser.
+- Saved recipes with original evidence, correction history and database-enforced confirmation. Background source changes flag conflicting reviews instead of silently replacing them.
+- Meals with up to 12 dishes, separate servings and courses, guest count, serve time, save/reload and a meal shopping preview. Merged shopping and grocery carts are Phase 3.
+- Household settings, owner permissions, JSON export and immediate deletion of current household data. Concurrent writes use version checks.
+- Drizzle migrations with UUIDv7 IDs and RLS on every household table. Each first login receives the three original CC0 Cookthis test recipes and a test meal.
+- Production Compose, Caddy, deployment, update and backup scripts. Web, migration and backup images build. Database migrations and backup commands run successfully inside containers against local services.
+
+## Measured checks
+
+| Check | Result |
+| --- | --- |
+| TypeScript | Pass |
+| Unit tests | 203 passed |
+| Scaling line coverage | 98.75% |
+| Review line coverage | 100% |
+| Total measured coverage | 97.71% |
+| Real Supabase database checks | Pass: isolation, confirmation trigger, immutable evidence, audit, privilege escalation, versioning, cascading deletion |
+| Browser suite | 38 passed, 6 intentional duplicate-scenario skips |
+| Phase 2 acceptance | Paste through real queue/worker, confirm all estimates, scale to 6, view list anonymously, authenticate by email, save 3 distinct dishes and reopen |
+| Linux visual suite | 12 passed, Home/Recipe/Meal, phone/tablet, light/dark |
+| Deterministic extraction replay | Three original recipes pass; not a live model benchmark |
+| Web build and Docker build | Pass |
+| Caddy and Compose configuration | Pass |
+| Container migration rerun | Pass, no duplicate migrations |
+| Backup command | Postgres dump and Redis snapshot created |
+| Secret-file exclusion | No `.env` files in the web runtime image |
+
+Browser extraction uses a deterministic test model with the real queue and worker. Authentication uses real local Supabase and its mail catcher. No live MiMo benchmark was rerun in this phase.
+
+## Open it
+
+This workspace has the Phase 2 preview running at **http://localhost:3000**. Real local sign-in emails appear at **http://127.0.0.1:54324**. Open a test recipe, review its details, set six servings, click Shop, then Add to meal. Open the sign-in message in the local mail catcher and follow its link in the same browser. Add Lemon green beans and Oat baked apples, then save and refresh.
+
+There is no shared owner password. The first signed-in person in a new account owns that account's household. Local test accounts are separate from any future hosted Supabase project.
+
+## Reproduce
+
+With Node 22, pnpm and Docker installed:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm db:local
+pnpm test:database
+pnpm typecheck
+pnpm test:coverage
+pnpm test:fixtures
+pnpm build
+docker compose -f infra/compose.test.yml up -d --wait
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
+The original Phase 1 live reports remain in `LIVE-RESULTS.md` and `PHASE1.md`. This phase does not remove the need for independently reviewed accuracy references.
+
+## Limits before launch
+
+- Hosted Supabase, Resend SMTP, Google/Apple credentials, DNS and a public VPS are not configured in this workspace. Email sign-in is verified locally; external OAuth providers are not live-tested.
+- No public deployment or fresh Ubuntu VM test is claimed. Fresh-VM acceptance remains Phase 7.
+- The single web container briefly restarts during updates. Zero-downtime rolling replacement is not implemented.
+- Density conversions are estimates. The catalog has over 200 named preparations, primarily baking and pantry ingredients, not a verified ranking of the most common foods.
+- Current household data is deleted immediately. Local backups have a separate seven-day retention period and are not off-host disaster recovery.
+- Grocery ordering, pantry merging, conductor, helpers, billing and creator tools belong to the remaining phases. No grocery order or payment can be made in this build.
+
+Next: Phase 3, merged lists, pantry, grocery provider adapters, exports, click logging and affiliate disclosure. Wait for `continue`.
+
+---
+
+## Archived Phase 1 checkpoint
+
+# Phase 1 checkpoint, final stabilisation pass
+
+The 18/20 returned-draft target passed on every run. Run 1: 19/20 returned drafts, 17/20 Stage 1 drafts, 1 need caption; Run 2: 19/20 returned drafts, 16/20 Stage 1 drafts, 1 need caption; Run 3: 18/20 returned drafts, 16/20 Stage 1 drafts, 1 need caption.
+
+Stop here until the operator says continue. Phase 2 has not started. Draft availability includes needs_caption and is not independently verified ingredient accuracy.
+
+## What works
+
+- Free text equipment accepts steamer and other real tools. The known equipment list is a prompt hint.
+- Allergens are normalised to a string list after extraction and remain inferred. Nested legacy tuples do not become confidence words or evidence quotes in that list.
+- Quantity ranges accept objects, numeric pairs and numeric text. Alternatives are accepted and marked inferred. Zero-duration steps become one inferred active minute with a visible warning.
+- Missing or unusual oven settings and unverified ingredient evidence produce warnings. Structural errors, such as duplicate ids and references to nonexistent ingredients, still reject with exact rules and field paths.
+- Sources with no ingredient evidence return an empty needs_caption draft. The UI says "Paste the creator's caption" and submits the caption with the original link. Background audio can replace this state without changing the recipe id.
+- A model timeout or error gets up to two immediate retries with fresh requests. Each call is capped at 30 seconds; all Stage 1 collection and calls share the unchanged 60-second ceiling. Two full timeouts leave no time for a third call.
+- Stage 2 remains separate with its 300-second ceiling, ten-minute audio cap and four parallel chunk lanes. It retains an existing recipe when later evidence is unavailable.
+- Exact source, model and validator failure events remain logged, including recovered failures and retry decisions. Secrets stay in ignored .env.
+
+## Three-run evidence
+
+All 60 attempts used extraction commit 45cc960, with no fixture replacement, extraction cache reuse or implementation changes. LIVE-RESULTS.md (private development repository: LIVE-RESULTS.md) contains the table. JSON (private development repository: tests/fixtures/stability-final-2026-10-11.json) retains all outcomes, needs_caption counts, Stage 2 timings, failures and costs. CSV (private development repository: tests/fixtures/stability-final-2026-10-11.csv) contains the summary.
+
+Percentiles use nearest rank across three observations per video, so p95 is the observed maximum. Main timing columns include failed attempts and measure worker execution, excluding queue waiting and browser delivery. A caption-needed draft is disclosed separately and must not be interpreted as a usable recipe. Costs use configured rates and returned tokens; incomplete usage is marked as a lower bound.
+
+## Verification
+
+All three deterministic recipe replays passed. 196 unit tests passed. TypeScript checks and the production build passed. Browser tests: 33 passed, three duplicate cases skipped. These include the caption-needed form on phone and tablet in light and dark modes. Rebuilt local Docker services started successfully; web and worker health checks returned HTTP 200 and Redis was healthy. The proof app is at http://localhost:3000.
+
+## Exact test commands
+
+From the repository root, with Node 22, pnpm and Docker installed:
+
+```sh
+pnpm typecheck
+pnpm test
+pnpm test:fixtures
+pnpm build
+docker compose -f infra/compose.test.yml up -d --wait
+pnpm test:e2e
+docker compose --env-file .env -f infra/compose.proof.yml build worker
+docker run --rm --env-file .env -e EXTRACTION_COMMIT="$(git rev-parse HEAD)" \
+  -v "$PWD/artifacts:/app/artifacts" \
+  -v "$PWD/scripts:/app/scripts:ro" \
+  -v "$PWD/tests/fixtures:/app/tests/fixtures:ro" cookthis-proof-worker \
+  ./node_modules/.bin/tsx scripts/stability-run.ts artifacts/stability-next
+```
+
+Use a fresh output directory. The runner completes all three runs despite individual failures, and exits nonzero unless every run returns at least 18 drafts. With media tools installed locally, use pnpm test:stability. To regenerate this report without model calls:
+
+```sh
+pnpm exec tsx scripts/stability-report.ts artifacts/stability-final
+```
+
+## Remaining live failures
+
+- Run 1, chilli garlic sandwich: malformed range fields prompted regeneration, followed by timeouts at the shared ceiling.
+- Run 2, high-protein bites: dishes.0.title remained an array rather than a provenance object after the validator retry.
+- Run 3, Pancake Short: Stage 1 timed out and YouTube required sign-in for the audio source. No login or proxy was used.
+- Run 3, chicken pulao: null quantity fields prompted regeneration, followed by timeouts at the ceiling.
+- The three-version feta background update failed in Runs 2 and 3, and hummus background updating failed in Run 3. Their first drafts were retained.
+
+## What remains
+
+Independent review of the 20 reference recipes is still required for the original accuracy gate. The failure ledger records any remaining source and model limitations from this run. No public deployment or Phase 2 acceptance is claimed. Await continue before further work.
+
+---
+
+## Latest Phase 1 live validation report
+
+# Phase 1 stability, three consecutive runs
+
+Extraction commit: 45cc9609219e0c0a36a4aeb53db3615a21751fe1. Nearest-rank percentiles. Three observations per video. Main timing columns include every attempt, including failures, and measure worker execution without queue or browser delivery. Successful-draft-only timing is reported separately. Cost percentiles use returned-token lower bounds when any usage is missing. No extraction-cache reuse.
+
+**18/20 goal: met on all three runs.** A final draft may be recovered by Stage 2. First-draft counts are separate. Caption-needed drafts count as returns, per the operator decision, but contain no recipe ingredients. A successful draft is not a verified accuracy pass. The existing video references still need independent review.
+
+| Run | First drafts | Final drafts | Needs caption | Stage 1 p50 / p95 | Returned usage USD |
+| --- | -----------: | -----------: | ------------: | ----------------: | -----------------: |
+| 1   |        17/20 |        19/20 |             1 |      18.4 / 60.0s |           ≥0.04771 |
+| 2   |        16/20 |        19/20 |             1 |      18.5 / 60.0s |           ≥0.04675 |
+| 3   |        16/20 |        18/20 |             1 |      20.9 / 60.0s |           ≥0.04368 |
+
+| Video                                                                     | Final drafts | Needs caption | First drafts | Stage 1 p50 / p95, s | Final outcome p50 / p95, s | Cost p50 / p95, USD |
+| ------------------------------------------------------------------------- | -----------: | ------------: | -----------: | -------------------: | -------------------------: | ------------------: |
+| [Spanish pancakes](https://www.youtube.com/watch?v=umj66RVAbOM)           |          3/3 |           0/3 |          3/3 |          32.0 / 58.4 |                56.2 / 87.7 | ≥0.00422 / ≥0.00422 |
+| [Pancake Short](https://www.youtube.com/watch?v=a1oPd5BgWKk)              |          2/3 |           0/3 |          0/3 |          60.0 / 60.0 |                81.6 / 82.3 | ≥0.00245 / ≥0.00245 |
+| [Baked feta pasta](https://www.youtube.com/watch?v=Hb-W7VKvjpw)           |          3/3 |           0/3 |          0/3 |          60.0 / 60.0 |                91.5 / 92.2 | ≥0.00315 / ≥0.00318 |
+| [Peanut butter cookies](https://www.youtube.com/watch?v=m9all4q8zqA)      |          3/3 |           0/3 |          3/3 |          14.2 / 30.4 |                14.2 / 30.4 |   0.00077 / 0.00077 |
+| [German chocolate mousse](https://www.youtube.com/watch?v=xriZxvsyGPI)    |          3/3 |           0/3 |          3/3 |          22.3 / 23.6 |                47.4 / 79.8 | ≥0.00570 / ≥0.00576 |
+| [Cupcake Addiction mousse](https://www.youtube.com/watch?v=mOYkuvL4GbI)   |          3/3 |           0/3 |          3/3 |          24.1 / 25.8 |                24.2 / 25.8 |   0.00068 / 0.00084 |
+| [Inspired Taste tomato soup](https://www.youtube.com/watch?v=X_lZ49spG5A) |          3/3 |           0/3 |          1/3 |          60.0 / 60.0 |              110.7 / 141.0 | ≥0.00641 / ≥0.00658 |
+| [Epicurious tomato soup](https://www.youtube.com/watch?v=DAEWi_C7I8Y)     |          3/3 |           0/3 |          3/3 |          14.6 / 41.3 |                28.2 / 53.4 |   0.00264 / 0.00324 |
+| [Garlic bread](https://www.youtube.com/watch?v=HzFOQEd9pWY)               |          3/3 |           0/3 |          3/3 |          18.5 / 35.7 |                53.1 / 80.8 |   0.00360 / 0.00362 |
+| [Hummus](https://www.youtube.com/watch?v=xqV812lkl9Q)                     |          3/3 |           0/3 |          3/3 |          15.6 / 26.8 |               78.0 / 127.4 | ≥0.00534 / ≥0.00535 |
+| [Banana chocolate pancakes](https://www.youtube.com/watch?v=jrvN_iO1B30)  |          3/3 |           0/3 |          3/3 |          18.4 / 29.6 |                44.6 / 64.6 |   0.00493 / 0.00562 |
+| [Feta pasta, three versions](https://www.youtube.com/watch?v=LuroDGsJkMA) |          3/3 |           0/3 |          3/3 |          24.1 / 27.0 |              144.0 / 171.6 | ≥0.00328 / ≥0.00333 |
+| [Sprouts and quinoa salad](https://www.instagram.com/reel/DZERo-Apa5o)    |          3/3 |           0/3 |          3/3 |          16.5 / 19.0 |                16.5 / 19.0 |   0.00085 / 0.00086 |
+| [High-protein bites](https://www.instagram.com/reel/DY_xPzjPxxm)          |          2/3 |           0/3 |          2/3 |          10.5 / 22.3 |                10.5 / 22.3 |   0.00071 / 0.00144 |
+| [Kashmiri biryani](https://www.instagram.com/reel/DDyt2gMTyF6)            |          3/3 |           0/3 |          3/3 |          19.3 / 19.8 |                19.3 / 19.8 |   0.00100 / 0.00104 |
+| [Thecha mushrooms](https://www.instagram.com/reel/DYujHqDNMga)            |          3/3 |           0/3 |          3/3 |          15.0 / 28.9 |                15.0 / 28.9 |   0.00079 / 0.00160 |
+| [Corn cheese wrap](https://www.instagram.com/reel/Da-UVq8KTT4)            |          3/3 |           0/3 |          3/3 |          16.8 / 18.8 |                16.8 / 18.8 |   0.00103 / 0.00104 |
+| [Chilli garlic sandwich](https://www.instagram.com/reel/DRrBohmgVzg)      |          2/3 |           0/3 |          2/3 |          13.4 / 60.0 |                13.4 / 60.0 | ≥0.00087 / ≥0.00087 |
+| [Paneer kebab](https://www.instagram.com/reel/DbOBtipCMnt)                |          3/3 |           3/3 |          3/3 |            0.0 / 0.0 |                  0.0 / 0.0 |   0.00000 / 0.00000 |
+| [Chicken pulao](https://www.instagram.com/reel/Dbs0EwuTqOy)               |          2/3 |           0/3 |          2/3 |          17.8 / 60.0 |                17.9 / 60.0 | ≥0.00094 / ≥0.00096 |
+
+A ≥ marks a lower bound on the estimate at configured uncached rates, not an invoice. Actual billing can differ, including cached-token discounts. Cost completeness is checked against the returned usage ledger, including billed responses that failed JSON parsing. If a call returned no usage, its lower bound is zero, not a claim that it was free. With three observations, p95 is the maximum observed value. Main timing columns include failures; they are time-to-outcome, not a promise of draft delivery. Stage 2 and successful-draft-only timing, all 60 outcomes, failure events, rules and token counts are in the JSON report (private development repository: tests/fixtures/stability-final-2026-10-11.json). The CSV (private development repository: tests/fixtures/stability-final-2026-10-11.csv) contains the per-video summary.
+
+## Unsuccessful outcomes
+
+- Run 1, **Pancake Short**: audio recovered a draft after Stage 1 failed.
+  - Stage 1, model_timeout, `model.stage_ceiling`, frame_model: The operation was aborted due to timeout
+  - Stage 1, source_failure, `source.timeout`, source_collection: The operation was aborted due to timeout
+- Run 2, **Pancake Short**: audio recovered a draft after Stage 1 failed.
+  - Stage 1, model_timeout, `model.request_timeout`, frame_model: The operation was aborted due to timeout
+  - Stage 1, source_failure, `source.timeout`, stage1: The operation was aborted due to timeout
+- Run 3, **Pancake Short**: no final draft.
+  - Stage 1, model_timeout, `model.request_timeout`, frame_model: The operation was aborted due to timeout
+  - Stage 1, source_failure, `source.timeout`, stage1: The operation was aborted due to timeout
+  - Stage 2, source_failure, `source.sign_in_required`, audio_collection: YouTube requires a sign-in check for this request. Paste the caption instead.
+- Run 1, **Baked feta pasta**: audio recovered a draft after Stage 1 failed.
+  - Stage 1, model_timeout, `model.request_timeout`, frame_model: The operation was aborted due to timeout
+  - Stage 1, source_failure, `source.timeout`, stage1: The operation was aborted due to timeout
+- Run 2, **Baked feta pasta**: audio recovered a draft after Stage 1 failed.
+  - Stage 1, model_timeout, `model.request_timeout`, frame_model: The operation was aborted due to timeout
+  - Stage 1, source_failure, `source.timeout`, stage1: The operation was aborted due to timeout
+- Run 3, **Baked feta pasta**: audio recovered a draft after Stage 1 failed.
+  - Stage 1, model_timeout, `model.request_timeout`, frame_model: The operation was aborted due to timeout
+  - Stage 1, source_failure, `source.timeout`, stage1: The operation was aborted due to timeout
+- Run 2, **German chocolate mousse**: first draft retained after background failure.
+  - Stage 2, source_failure, `source.http_403`, audio_collection: No usable audio was recovered. The fast draft is unchanged. The caption track could not be read. The audio could not be read: The public media source returned HTTP 403. Paste the caption instead.. Check the original video.
+- Run 2, **Inspired Taste tomato soup**: audio recovered a draft after Stage 1 failed.
+  - Stage 1, model_timeout, `model.stage_ceiling`, frame_model: The operation was aborted due to timeout
+  - Stage 1, source_failure, `source.timeout`, source_collection: The operation was aborted due to timeout
+- Run 3, **Inspired Taste tomato soup**: audio recovered a draft after Stage 1 failed.
+  - Stage 1, model_timeout, `model.request_timeout`, frame_model: The operation was aborted due to timeout
+  - Stage 1, source_failure, `source.timeout`, stage1: The operation was aborted due to timeout
+- Run 3, **Hummus**: first draft retained after background failure.
+  - Stage 2, source_failure, `source.unavailable`, caption_track: This site asks automated readers not to fetch this page. Paste the creator’s caption instead.
+  - Stage 2, model_timeout, `model.request_timeout`, recipe_model: The operation was aborted due to timeout
+- Run 1, **Feta pasta, three versions**: first draft retained after background failure.
+  - Stage 2, source_failure, `source.http_403`, audio_collection: No usable audio was recovered. The fast draft is unchanged. The caption track could not be read. The audio could not be read: The public media source returned HTTP 403. Paste the caption instead.. Check the original video.
+- Run 2, **Feta pasta, three versions**: first draft retained after background failure.
+  - Stage 2, source_failure, `source.unavailable`, caption_track: This site asks automated readers not to fetch this page. Paste the creator’s caption instead.
+  - Stage 2, model_timeout, `model.request_timeout`, recipe_model: The operation was aborted due to timeout
+- Run 3, **Feta pasta, three versions**: first draft retained after background failure.
+  - Stage 2, source_failure, `source.unavailable`, caption_track: This site asks automated readers not to fetch this page. Paste the creator’s caption instead.
+  - Stage 2, model_timeout, `model.request_timeout`, recipe_model: The operation was aborted due to timeout
+- Run 2, **High-protein bites**: no final draft.
+  - Stage 1, validator_rejection, `schema.invalid_type`, recipe_validation: dishes.0.title: Expected object, received array
+- Run 1, **Chilli garlic sandwich**: no final draft.
+  - Stage 1, model_timeout, `model.request_timeout`, recipe_model: The operation was aborted due to timeout
+- Run 3, **Chicken pulao**: no final draft.
+  - Stage 1, model_timeout, `model.stage_ceiling`, recipe_model: The operation was aborted due to timeout
+
+## Checkpoint interpretation
+
+All 60 attempts used extraction revision 45cc960. Fixtures, reference answers and extraction code were unchanged between runs. Caption-needed drafts are counted as returns by the operator's instruction; they are not ingredient-bearing recipes. Ingredients and quantities still need independent reference review, so this reliability result does not establish accuracy acceptance or launch readiness.
+
+The model gets up to three fresh requests, each capped at 30 seconds and clipped to the remaining stage budget. Two full timeouts consume Stage 1's 60-second ceiling; a third request is possible only when previous requests fail sooner. A structural validator rejection still gets one regeneration with the exact rule and reason. Stage 2 retains its 300-second ceiling. Missing token usage remains unpriced, not free.
+
+The previous report remains in tests/fixtures/stability-2026-10-11.json. Tests and reproduction instructions are in PHASE1.md (private development repository: PHASE1.md). Phase 2 has not started.
