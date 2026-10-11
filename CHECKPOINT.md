@@ -1,8 +1,10 @@
 # Cookthis checkpoint channel
 
-This repository contains only CHECKPOINT.md. No application code, credentials, tokens, raw logs or private household data are published.
+This repository contains timestamped checkpoint Markdown files and CHECKPOINT.md as the latest copy. No application code, credentials, tokens, raw logs or private household data are published.
 
 ## Current checkpoint
+
+Publication now preserves a new UTC-timestamped file at every checkpoint and stop. CHECKPOINT.md is an identical latest copy. Product status and all measured results below are unchanged.
 
 Kroger certification credentials are configured locally and catalog checks succeed. The actual customer-cart test is blocked on a matching, reachable callback and customer OAuth sign-in. Application commit: 11865af. Phase 4 has not started.
 
