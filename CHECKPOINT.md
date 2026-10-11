@@ -2,15 +2,25 @@
 
 This public repository contains only this status document. Application code, credentials, raw logs and private data are not published here.
 
-## Current stop
+## Current checkpoint
 
-Status channel setup is complete on 2026-10-11. GitHub CLI is authenticated, and this public repository is dedicated to CHECKPOINT.md only. The full Phase 2 checkpoint and the historical Phase 1 checkpoint, live result tables, costs and failure ledger appear below.
+The meal persistence fix is deployed locally. Phase 3 is authorized and now starting. This public document contains status only; no application code, authentication links, credentials or private household data are published.
 
-Phase 2 is complete locally. Product work remains stopped before Phase 3 until the operator says continue. No additional product work or live model validation was performed during status-channel setup.
+## Meal persistence fix, 2026-10-11
 
-At every future checkpoint and whenever work stops, the full summary and result tables will be written here and pushed. Publishing checks reject extra files and recognizable or configured credentials. Application code and publishing tools remain in the separate development repository.
+The ordinary live save, refresh and reopen path retained all three dishes. A slow-save browser test reproduced a real loss: edits made while a save was pending were overwritten by the older response, and the screen incorrectly said “Meal saved.” The fix preserves edits made after the request started, advances only the saved version, keeps the meal dirty and asks the cook to save the newer changes. Unsaved device drafts now survive refresh, and leaving during a save warns the cook.
 
-The localhost addresses below work only on the operator's computer. There is no public Cookthis application deployment yet. Historical statements about the next phase describe their earlier checkpoint, not current progress.
+| Verification | Result |
+| --- | --- |
+| Manual browser at localhost:3000 | Real MiMo extraction, real Supabase email link, three dishes saved, refreshed and reopened |
+| Slow-save regression before fix | Failed: later dish edits discarded and Save disabled |
+| Same regression after fix | Passed: three dishes retained, saved, refreshed, reopened from the list and directly |
+| API/model substitutions in regression | No model server or fabricated API responses; only a controlled delay before forwarding the real save request |
+| TypeScript and web container build | Passed |
+| Local preview health after deployment | Passed |
+
+The exact sequence of the operator's original incident was not observable. The ordinary completed-save path did not reproduce deletion; the confirmed in-flight overwrite is a concrete data-loss cause now fixed. No household records were deleted or reconstructed. Phase 3 is authorized and begins next.
+
 
 ---
 
