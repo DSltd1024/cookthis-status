@@ -1,3 +1,85 @@
+# Phase 7 checkpoint, 12 October 2026
+
+Status: local release candidate. Phase 7 is not complete and no public launch is claimed.
+
+## What works locally
+
+- Installable manifest and share entry point accept a shared link or caption for review before extraction. The existing cooking service worker is registered across the app.
+- The iOS Shortcut is signed by Apple's signing command, downloadable at `/ios`, and accompanied by an install guide and animation. It targets the public cookthis.app domain.
+- Six seasonal pages contain copyable scheduling practice using the three original Cookthis test recipes. They are explicitly not traditional holiday menus. Passover excludes the oat dessert.
+- An authenticated plan image download creates a private PNG. It shows up to twelve blocks with UTC times, not an unlimited full-plan export.
+- Signed Resend inbound events map a private household address to a queued extraction. Address tokens are hashed; duplicate deliveries are idempotent; household deletion cascades through mail records. Only plain-text email bodies are supported, not attachments or HTML-only messages.
+- Owner-controlled email preferences are opt-in. Daily jobs prepare recipe links, cook invitations, trial notices, monthly recaps and operator summaries. Weekly reports count corrections by field; they are not an independent accuracy measurement.
+- Legal pages name AKA Foods Co., USA and are marked for lawyer review. Creator removal instructions and unpublished launch drafts are included.
+- Deployment, operations and secret setup documentation now covers these flows. A preflight script reports missing setting names without printing secrets.
+
+## Verification
+
+| Check                                          | Result                                                         | Scope                                                                                                       |
+| ---------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Type checking                                  | Pass                                                           | Web, worker, packages and tests                                                                             |
+| Unit suite                                     | 274 passed                                                     | Local deterministic tests                                                                                   |
+| Configured core line coverage                  | 98.55%                                                         | Extraction, recipe, scaling, shopping, timeline, security, push and grocery modules; not the whole codebase |
+| Email route and share checks                   | 8 passed                                                       | Signature, recipient token, payload and mocked queue behavior                                               |
+| Email database checks                          | Pass                                                           | Real local Supabase and Redis, cached original recipe fixture; duplicate handling, RLS and cascade deletion |
+| Browser regression suite                       | 68 passed, 36 intentional duplicate skips                      | Local Supabase sign-in; deterministic extraction model; four viewport/theme projects                        |
+| Additional seasonal persistence check          | 1 passed                                                       | Sign in, copy three dishes, reload and retain dishes                                                        |
+| Final existing-screen visual checks            | 24 passed                                                      | Home, Recipe, Meal, Shop, Plan, Cook, Helper and timeline coverage across configured projects               |
+| Production source build                        | Pass                                                           | Next.js and worker                                                                                          |
+| Updated local containers                       | Healthy                                                        | New web and worker images reused existing dependency image                                                  |
+| Lighthouse mobile, local home page             | Performance 94, accessibility 100, best practices 100, SEO 100 | Local simulated mobile run, not a public deployment benchmark                                               |
+| iOS Shortcut signing                           | Pass                                                           | Apple signing tool and download bytes only; no iPhone import claim                                          |
+| Deployment shell syntax and Compose validation | Pass                                                           | Static validation, not a fresh-server deployment                                                            |
+
+The final launch-page browser suite passed 9 tests with 3 intentional persistence duplicates skipped. It includes eight install/iOS screenshot baselines across phone/tablet and light/dark, shared-input review, legal/example labels and the seasonal save/refresh check.
+
+The full browser suite ran before the final footer touch-target polish; the affected visual checks were rerun afterward. The seasonal save check was added and run separately. Final installation-page visual checks are recorded in the published checkpoint.
+
+The 60x conductor run still passed both scenarios: on-time maximum serve deviation 0.365 minutes, delayed maximum serve deviation 0.380 minutes, zero oven conflicts in each. The injected delay moved serve time by 12.779 minutes. Read latency p50/p95 was 42/60 ms on-time and 38/65 ms delayed.
+
+The standard clean Docker builds were stopped after prolonged dependency downloads. Successful replacement local builds copied current source onto an existing dependency image. They do not prove the required clean Ubuntu deployment.
+
+## Exact local checks
+
+```sh
+pnpm install --frozen-lockfile
+pnpm db:local
+pnpm typecheck
+pnpm test:coverage
+pnpm build
+docker compose -f infra/compose.test.yml up -d --wait
+pnpm exec tsx apps/worker/scripts/check-email.ts
+pnpm test:e2e
+node scripts/launch-preflight.mjs
+```
+
+The preflight currently exits 2, correctly reporting missing production settings. Browser tests use a deterministic extraction model and local Supabase. Live MiMo, Resend, affiliate and physical-device tests must not be inferred from those results.
+
+## Remaining acceptance and limitations
+
+- Public DNS, Hetzner access and production Supabase configuration have not been supplied. No fresh Ubuntu 24.04 VM was deployed. localhost:3000 is a local preview only.
+- Production settings missing from `.env`: DOMAIN, SUPABASE_URL, SUPABASE_ANON_KEY, DATABASE_URL, NEXT_PUBLIC_TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY, RESEND_API_KEY, RESEND_WEBHOOK_SECRET and OPS_EMAILS. Local preview overrides do not substitute for production credentials.
+- Android sharing from TikTok and actual iPhone Shortcut import still need physical-device checks on the public HTTPS site.
+- Real Resend receipt, sending, DNS verification and mail routing are unverified. Keep existing support mailbox MX routing intact. Saved email recipes do not yet receive later background audio updates. The monthly recap selects recent saved recipes rather than proving that each was never cooked.
+- Monitoring alert delivery, the required recurring synthetic extraction, R2 media storage and a fresh-server backup restore remain unverified or incomplete. No uptime promise is made.
+- Impact credentials and real attribution reporting are absent. Actual creator handle control has not been verified. These remain external Phase 6 gaps.
+- The earlier real Stripe test-mode purchase, signed webhook handling, duplicate replay, refund and premium revocation passed. No real funds moved. Production webhook delivery and a yearly purchase are not verified.
+- Earlier Phase 1 independent video accuracy, full grocery checkout/attribution and other historical limitations remain as recorded in prior checkpoints. They have not been replaced by these local test results.
+- The starter recipes and meal are seeded; a cook session begins when the user plans a cook rather than being automatically seeded on first login.
+- Legal review, production prices and current monthly infrastructure quotes are still required. Launch drafts have not been published and no outreach has been sent.
+
+## Next
+
+Finish missing local behavior and provider setup, run the standard clean container build and the documented fresh-VM deployment, then verify real phone sharing, Resend delivery, monitoring and an attributed grocery checkout. Do not mark Phase 7 complete until those acceptance checks pass. Stop at this checkpoint for the operator's next instruction.
+
+## Source and publication
+
+Local application commits: 2ab449d, 6e229d0 and 6b475a2. Application code and secrets are not published to this status repository. The local preview is http://localhost:3000 and is not a public live URL.
+
+## Historical checkpoints, preserved verbatim
+
+The following text records earlier verification at the time it was performed. Later results above supersede only explicitly updated findings.
+
 # Phase 6 live Stripe purchase and refund checkpoint
 
 2026-10-12. The operator completed the head-office address in the Cookthis test account. Stripe Tax is active. The real Stripe hosted test-mode purchase and full-refund acceptance now passes against the local Cookthis application. No real money moved. Phase 7 has not started.
