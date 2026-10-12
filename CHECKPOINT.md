@@ -1,3 +1,24 @@
+# Stripe setup handoff checkpoint
+
+2026-10-12. The operator authorized browser control to complete Stripe setup. The open Stripe tab is at the sign-in screen. No email or password is filled in, and the assistant has no dashboard session. The tab is retained for the operator to sign in and complete any authentication challenge.
+
+| Check | Result |
+| --- | --- |
+| Stripe dashboard | Sign-in required; browser setup cannot proceed yet. |
+| Cookthis account API | Accessible with the configured test key. |
+| Stripe Tax | Still pending, missing head_office. |
+| Reusable company address | Not present in the account API response. No address invented or submitted. |
+| Products, prices and local webhook secret | Configured in the preceding checkpoint, unchanged. |
+| Purchase and refund | Not run. Automatic-tax Checkout remains blocked. |
+
+Next: the operator signs in on the retained Stripe tab and says done. Continue the Cookthis test account setup using verified business information, then complete hosted test Checkout, check signed webhook entitlement and replay handling, issue the full test refund and confirm access is removed. If the dashboard has no business address either, the actual address is still required. No test purchase, refund, public deployment or production webhook is claimed.
+
+No application code or credentials changed in this pass. Historical results and exact provider error follow unchanged.
+
+---
+
+# Historical checkpoints, preserved unchanged
+
 # Phase 6 Stripe setup checkpoint
 
 2026-10-12. Stripe test credentials are configured for the separate Cookthis account. The requested purchase and refund remain blocked by missing Stripe Tax head-office configuration. Phase 6 is not accepted and Phase 7 has not started.
