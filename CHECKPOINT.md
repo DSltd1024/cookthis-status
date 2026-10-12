@@ -1,3 +1,103 @@
+# Phase 6 implementation checkpoint
+
+2026-10-12. Local app: http://localhost:3000. Source implementation commits: 1f3342f and dd196b5.
+
+Operator reporting, affiliate reconciliation, creator claims and links, media kits and the outreach helper are implemented. Billing was implemented at the previous checkpoint and has been regression-tested again. Phase 6's live external acceptance remains open: Stripe and Impact credentials are empty, and no real creator has supplied a profile-bio challenge. No production launch is claimed.
+
+## What works
+
+- `/ops` is restricted to verified sign-ins on the explicit `OPS_EMAILS` allowlist. It shows household activity, extraction results and recorded spend, correction counts, carts and clicks, reported orders, trials, current paid households, cooking feedback, creator traffic, currency-separated daily revenue and CSV export. Unconfigured integrations and unpriced model calls are labelled. Counters begin with this deployment, not invented historical measurements.
+- Impact reconciliation runs at 02:15 UTC and can be queued from `/ops`. It reads changed action IDs, fetches their current totals, matches `SubId1` to a known cart and upserts the action. Replays do not add commission twice; reversals zero the commission. Failures remain visible. No grocer basket contents or customer location from reports are stored.
+- `/creator` provides a 48-hour profile-bio challenge. Only the matching profile's structured biography can prove ownership. A code in a comment does not count. Blocked public access leaves the claim unverified. No login or proxy is used.
+- Verified creators receive `/c/{platform}-{handle}` and per-video links. Hourly discovery queues up to 20 public videos; creators can also submit a video link. The extracted owner URL must match the claimed profile before publication. Failed or unverifiable sources are labelled.
+- Creators review and pin corrections through the normal recipe editor. The database rejects a pin with low-confidence fields. Later extraction and audio results cannot replace a pinned recipe. Later pastes of the same video use the pinned version. Household copies stay private.
+- Public creator recipes support anonymous shopping and signed-in saving/cooking. Creator statistics show views, carts and cook starts without commission amounts. Raw captions/transcripts and provider usage records are stripped from public creator recipe payloads.
+- Media kits download as transparent 1080 by 1920 PNGs in the creator's chosen accent, with a copyable two-line caption. Text colour adapts to the accent for contrast.
+- `/ops/creators` accepts up to 20 handles, pre-extracts their latest public video and prepares a claim link and message. A message says a recipe is ready only when a draft exists. The operator sends outreach by hand. Optional payout share defaults to zero; saving a percentage does not send money.
+- Anonymous shopping links expire after seven days. Their list contents and outbound cart links are erased. Opaque references remain for another 180 days to match delayed affiliate reports; references with recorded orders remain for reporting. Household deletion still cascades immediately.
+
+## Verification
+
+| Check | Result | Scope |
+| --- | --- | --- |
+| Type checking | Passed | Shared, grocery, worker, web and test code |
+| Unit suite | 266 passed | Includes profile identity, anti-impersonation, Impact pagination/totals and JSON-order regression |
+| Measured core line coverage | 98.55% | Configured core modules, not a whole-application coverage claim |
+| Real Supabase household checks | Passed | RLS, corrections, immutable household shopping snapshots, per-device access and deletion |
+| Creator database integration | Passed | Injected public bio proof, missing-code rejection, owner conflict, private claims, pin guard, version conflict, public payload filtering, RLS on eight new tables and deletion |
+| Affiliate database integration | Passed | Decimal precision, replay, household attribution, approval/reversal, unknown cart rejection, expired anonymous content erasure with retained attribution and deletion cascade |
+| Billing database integration | Passed | Injected Stripe transport, one trial, concurrent replay, invoice ledger, cancellation grace, full refund and old-event protection |
+| Final full browser suite | 60 passed, 36 skipped, 2.9 minutes | Intentional duplicate-device skips; real local magic-link sign-in, both conductor scenarios, helpers, billing, persistence, creator and operator flows |
+| Creator browser acceptance | Passed locally | Claim UI, correction and pin, refresh, pinned recipe on a later paste, public link, anonymous shopping, 1080 by 1920 PNG and denied operator access |
+| Operator browser acceptance | Passed locally | Explicit test-only operator email, dashboard, CSV, anonymous denial and outreach screen |
+| Live public YouTube profile read | Passed, 717 ms | foodwishes biography present and 20 public videos discovered; no ownership claim or video extraction asserted |
+| Production builds | Passed | Next.js, worker, web Docker image and worker Docker image |
+| Local deployment | Healthy | Web, worker and Redis; migrations 0012 and 0013 applied |
+| Deployed browser inspection | Passed | Creator console loaded at localhost:3000 in the existing signed-in browser, no browser errors |
+| Secrets handling | Passed | .env remains ignored with mode 0600; no secrets copied into Git or the public report |
+
+The creator database test injects profile evidence, the billing test injects Stripe responses, and the browser tests use real local Supabase magic-link sign-in with a labelled disposable creator profile. None is presented as a live creator claim or Stripe purchase.
+
+### Conductor regression at 60x
+
+| Scenario | Completed steps | Finish spread | Maximum distance from serve time | Serve-time shift | Read p50 | Read p95 | Oven conflicts |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| on time | 7 | 0.375 min | 0.375 min | 0.647 min | 40 ms | 53 ms | 0 |
+| 12-minute delay | 7 | 0.428 min | 0.428 min | 12.826 min | 33 ms | 69 ms | 0 |
+
+Both three-dish scenarios, with dessert baked earlier, passed the five-minute serving window. These are local measurements, not a Lighthouse or mobile-network certification.
+
+## Live integration blockers
+
+| Check | Result | Exact reason |
+| --- | --- | --- |
+| Stripe hosted test-mode purchase and refund | Not run | STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_MONTHLY and STRIPE_PRICE_YEARLY are empty. Preflight stopped before any Stripe API call or purchase. |
+| Live Impact reconciliation | Not run | IMPACT_ACCOUNT_SID and IMPACT_AUTH_TOKEN are empty. |
+| Real creator ownership claim | Not run | A real creator must put the generated challenge in their own public biography. No third-party handle was claimed during testing. |
+| Default operator access on localhost | Denied until configured | OPS_EMAILS is empty. The operator browser test uses an explicit test-only allowlist. |
+| Public production deployment | Not performed | This checkpoint is a local implementation and verification checkpoint. |
+
+## Failures found and resolved
+
+- Postgres JSONB key ordering made identical review fields look changed. Comparisons now ignore object-key order, with a regression test.
+- The first media-kit browser test exposed an invalid multi-child text block in the PNG renderer. It was corrected; dimensions are checked by the browser test.
+- The first Docker web build lacked worker source files needed by the new database-check scripts during type checking. The build context now includes those files.
+- One full browser run passed 59 checks and failed one security case because the new creator-paste test had consumed the shared test IP's anonymous allowance. The app correctly returned the human-check response. That test now starts with a fresh counter in the isolated test Redis; production limits were not relaxed.
+- An initial retention test correctly hit the immutable shopping-snapshot guard. A separate migration permits only privileged erasure of expired anonymous contents. Household snapshots remain immutable, and delayed attribution is tested after erasure.
+- An overlapping intermediate local build was superseded. Only the final successful build and completed test run count as verification.
+
+## How to test
+
+With local Supabase and test Redis running:
+
+```sh
+pnpm typecheck
+pnpm test:coverage
+pnpm test:database
+pnpm exec tsx apps/web/scripts/check-creators.ts
+pnpm exec tsx apps/web/scripts/check-affiliates.ts
+pnpm exec tsx apps/web/scripts/check-billing.ts
+pnpm build
+pnpm exec playwright test
+pnpm exec tsx apps/worker/scripts/profile-probe.ts
+node scripts/phase6-preflight.mjs
+```
+
+Read CREATORS.md for the operator/creator setup and BILLING.md for hosted Stripe purchase and full-refund acceptance. Migrations 0012 and 0013 must run before deploying the new images. Set OPS_EMAILS to the actual operator's verified sign-in email. Add provider secrets only to .env, never Git.
+
+## Known limits and next checkpoint
+
+Public profile and video metadata depend on platform availability; login walls and robots restrictions are not bypassed. A platform may expose fewer than 20 recent videos. The ownership check intentionally refuses to publish when extracted creator attribution cannot be verified. Initial Impact import covers 30 days; later imports catch up from the last successful run. Commission reports retain currency and pending/approved/reversed status, not invented order completion. Optional creator payout share has no automatic payout execution.
+
+The next Phase 6 acceptance step is a real Stripe test-mode hosted purchase and full refund after the four Stripe settings are supplied, then a configured Impact report and a real creator bio challenge. Phase 7 has not started. Historical extraction, grocery, helper and voice limitations remain in the preserved checkpoints below.
+
+
+---
+
+# Preserved historical checkpoints
+
+The earlier checkpoint content and result tables below are historical. The current result is above.
+
 # Phase 6 continuation checkpoint
 
 2026-10-12. Published immediately at the operator’s request before continuing. The verified timeline repair and billing increment remain deployed locally. The operator dashboard, affiliate reconciliation, creator claim and links, media kit and outreach helper are the active work. Live Stripe purchase and refund acceptance remains unverified; configuration will be checked during this continuation. No new test result is claimed in this immediate checkpoint.
