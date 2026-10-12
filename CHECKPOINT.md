@@ -1,3 +1,85 @@
+# Cookthis checkpoint: AKA brand update
+
+The operator requested AKA Foods brand-book styling and a live update. This checkpoint records that visual change independently from the existing launch limitations below.
+
+## What changed
+
+Cookthis now uses self-hosted Outfit throughout the website, the AKA Foods source blue, pale blue/mint/peach surfaces, and accessible dark adaptations. Home uses the original ingredient-bowl artwork. The footer credits AKA Foods with its original SVG. The installed-app icon, manifest colours, shared plan image and media-kit typography follow the same identity. Creator-selected media-kit accents remain unchanged. Recipe guesses and errors keep a separate warning tone, dotted underlines and written explanations.
+
+Core AKA Foods is the chosen route. Connected Drive metadata and the BrandBook inventory were checked on 12 October 2026. The original archive remains dated 30 June 2026, and no replacement visual guide was found in targeted discovery. Bundled assets are from the verified 28 September snapshot. This was a targeted freshness check, not an exhaustive branding approval audit.
+
+Source commit: abaf479. Application source stays local and on the private server. The public status repository contains checkpoint Markdown only.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Production build, local | Passed |
+| Workspace type checking | Passed |
+| Final web type checking | Passed |
+| macOS visual/browser checks | 32 passed |
+| Linux visual/browser checks | 32 passed |
+| Screenshot baselines | 80 updated: ten screens, four light/dark phone/tablet combinations, two platforms |
+| Main screens | Home, Recipe, Meal, Shop, Plan, Cook, Helper, second screen, Install, iOS guide |
+| Second-screen text/bar separation | Existing geometry assertions still pass |
+| White text on primary blue | 4.61:1 contrast |
+| Muted text on pale blue/mint/peach | 5.32:1 / 4.92:1 / 5.03:1 |
+| Dark primary button text/background | 8.90:1 |
+| Original logo/illustration | Byte-identical to verified archive assets |
+| Local generated icon | HTTP 200, visually inspected |
+
+Exact verification commands:
+
+```sh
+pnpm build
+pnpm typecheck
+pnpm --filter @cookthis/web typecheck
+pnpm exec playwright test tests/e2e/recipes.spec.ts tests/e2e/household.spec.ts tests/e2e/shopping.spec.ts tests/e2e/conductor-visual.spec.ts tests/e2e/helper-visual.spec.ts tests/e2e/launch.spec.ts --grep 'home is usable|original recipe|meal layout|shopping layout|plan and cook screens|helper and second screen|phone sharing|launch pages'
+```
+
+Linux ran the same 32 selected checks in the official Playwright v1.64.0 container against the local production build with E2E_EXTERNAL=1 and the host browser-test server. Baselines were first regenerated, representative home/recipe/cook/timeline screenshots inspected, then the final checks ran without updating baselines. No model calls, live fixture accuracy run or payment transaction was required or claimed for this visual change.
+
+## Live deployment
+
+https://cookthis.app now serves the updated design. The production web container was rebuilt using the production environment and restarted without rebuilding the worker, Redis, Caddy or backup service. No database migration or credential change was needed. The prior web image is retained on the server as cookthis-web:before-aka-20261012.
+
+| Production check | Result |
+| --- | --- |
+| Public home | HTTP 200, valid certificate |
+| Public health endpoint | HTTP 200, status ok, model configured |
+| Direct-origin health endpoint | HTTP 200, TLS verification successful |
+| Generated icon | HTTP 200 |
+| Caddy, web, worker, Redis, backup | All five running and healthy |
+| Real browser on live Home and Recipe | Outfit loaded, original artwork/logo loaded, guesses remain marked |
+| Mobile Lighthouse, live Home | Performance 92, accessibility 100, best practices 100, SEO 100 |
+
+Lighthouse 13.5.0 measured the live public site with the default mobile simulation. This is one measured run, not a guarantee for every network or page. First contentful paint was 1.6 seconds and largest contentful paint was 3.1 seconds. The new look clears the 90 mobile performance target on this run.
+
+Verification commands:
+
+```sh
+curl -fsS https://cookthis.app/healthz
+curl --resolve cookthis.app:443:2.28.41.10 https://cookthis.app/healthz
+pnpm dlx lighthouse https://cookthis.app --chrome-flags='--headless --no-sandbox' --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=artifacts/aka-live-lighthouse.json --quiet
+```
+
+Runtime rollback, from /opt/cookthis on the production server:
+
+```sh
+docker image tag cookthis-web:before-aka-20261012 cookthis-web:latest
+docker compose --env-file .env -f infra/docker-compose.yml up -d --no-deps --force-recreate --wait web
+```
+
+The saved image rolls the running web app back. Before rebuilding after a rollback, also restore the intended source revision. The server still uses an uploaded source archive, with no private Git remote configured.
+
+## Known limitations and next work
+
+The requested branding update is complete and deployed. Existing production limitations remain: the YouTube synthetic extraction is blocked by a source sign-in check on the server IP; the caption/text fallback works. Production Stripe and Kroger credentials, affiliate attribution, R2 application upload integration, production Sentry, real Android/iOS device acceptance, independent live 20-video accuracy acceptance, creator bio verification and legal review remain unverified or incomplete as described in the preserved checkpoint. No source bypass, payment test, grocery order or private-data publication was performed for this visual update.
+
+Next work should address those launch limitations. The previous extraction failure is preserved rather than reported as fixed by a visual deployment.
+
+## Historical checkpoint, preserved verbatim
+
 # Production deployment checkpoint, 12 October 2026
 
 Cookthis is live at https://cookthis.app and https://www.cookthis.app. The requested email setup, production deployment and monitoring configuration have been performed. The website and email path are verified. A real YouTube source-access failure remains active and is visible in monitoring. This is not a declaration that every original Phase 7 acceptance gate is complete.
