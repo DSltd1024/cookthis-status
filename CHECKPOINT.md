@@ -1,3 +1,19 @@
+# Production Resend credential checkpoint
+
+The operator supplied the Resend API key. RESEND_API_KEY was updated in the local private production environment and server /opt/cookthis/.env. The remote update changed only this field and retained the other server settings.
+
+| Check | Result |
+| --- | --- |
+| RESEND_API_KEY | Stored in both production files |
+| Local and server environment | SHA256 matches |
+| Permissions | Owner-only 0600 |
+| Provider authentication or email delivery | Not tested in this credential-only step |
+| Application deployment | Not started |
+
+No email was sent, no webhook was created and no application code was changed. Resend sender verification, receiving setup, webhook signing secret and Supabase SMTP still require setup and verification. R2 and other launch acceptance gaps remain below. No credential values are published.
+
+## Prior full checkpoints and result tables, preserved verbatim
+
 # Production database credential checkpoint
 
 The operator supplied the existing Supabase database password and authorized storing it only in production DATABASE_URL. The local production environment and server /opt/cookthis/.env now have the completed session-pooler URI with sslmode=require. The password was not added to any separate password variable, local development configuration, tracked file or public report.
