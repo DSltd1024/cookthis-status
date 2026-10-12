@@ -1,3 +1,53 @@
+# Cookthis checkpoint: YouTube transcript fallback
+
+Source commit: 5112c7e. Direct public YouTube fetching is still first. A new TranscriptProvider interface now supports Supadata after eligible direct-source failures, including the production server's sign-in challenge. No YouTube login, cookies or proxy configuration was added. Caption paste remains available.
+
+## Provider comparison, checked 12 October 2026
+
+| Provider | Existing captions | Audio when captions do not exist | Decision |
+| --- | --- | --- | --- |
+| Supadata | Native transcript mode | Generate mode, synchronous result or asynchronous job polling | Selected |
+| TranscriptAPI | Creator and YouTube-generated caption tracks | Its API documents no_captions and tells the caller not to retry; no audio generation fallback is documented | Not selected |
+
+References: https://docs.supadata.ai/api-reference/endpoint/transcript/transcript , https://docs.supadata.ai/api-reference/endpoint/transcript/transcript-get , https://transcriptapi.com/docs/api/ , https://supadata.ai/pricing . This was a documentation comparison, not a live comparison of paid accounts.
+
+## Behaviour
+
+- Stage 1 requests native captions only. Stage 2 requests generated audio, with distinct evidence labels. The 60-second first-stage and 300-second background ceilings remain in place. When configured, direct metadata gets a 15-second attempt so there is time to use the fallback.
+- Provider metadata must report a video duration greater than zero and no longer than ten minutes. Unknown duration fails safely to caption paste.
+- Robots denials, private/restricted video messages and network safety rejections are not routed through the provider. Authenticated provider calls use pinned public DNS, one fixed API origin, bounded response bodies, no redirects and no ambient proxies.
+- Provider-generated audio is one asynchronous vendor job; direct audio retains MiMo's existing 60-second chunks. Neither path stores media after extraction.
+- Source errors retain their direct-fetch reason and append the provider failure. Missing credentials explicitly identify SUPADATA_API_KEY.
+- The privacy notice now identifies Supadata's receipt of public video links when configured. The worker alone receives its API key.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Source, adapter, two-stage and SSRF tests | 102 passed across 6 files, including the process error regression |
+| Workspace and test TypeScript checks | Passed |
+| Worker production build, local | Passed |
+| Production deployment | Passed, web and worker rebuilt and recreated; all five containers healthy |
+| Public /healthz after deployment | Passed, status ok and modelConfigured true |
+| Production synthetic extraction | Failed in 2.494 seconds at 2026-10-12T13:26:47.303Z; YouTube sign-in challenge, then SUPADATA_API_KEY missing; Better Stack accepted the failure report |
+| Live Supadata captions/audio calls | Not run, API key not supplied |
+
+Commands: `pnpm typecheck`; `pnpm exec vitest run tests/transcript-provider.test.ts tests/transcript-source.test.ts tests/sources.test.ts tests/stages.test.ts tests/security.test.ts`; `pnpm exec vitest run tests/process.test.ts`; `pnpm --filter @cookthis/worker build`; production `bash infra/synthetic.sh`.
+
+Exact synthetic failure: “YouTube requires a sign-in check for this request. Paste the caption instead. Supadata fallback needs SUPADATA_API_KEY. Paste the creator’s caption instead.” No provider request was made without a key.
+
+## What is needed
+
+Sign up at https://dash.supadata.ai/auth/sign-up?plan=free and supply the API key shown in the Supadata dashboard. The required private environment variable is SUPADATA_API_KEY. No YouTube credentials are needed. TRANSCRIPT_PROVIDER defaults to supadata; none disables it. After the key is installed in the private production environment, recreate the worker and repeat the real synthetic check, followed by a no-caption video to verify generated audio.
+
+Pricing checked today: the free plan has 100 credits per month. Native transcripts use one credit; audio generation uses two credits per minute; metadata adds a credit. A 15-minute synthetic check deliberately bypasses the recipe cache, approximately 2,880 checks and 5,760 credits per 30-day month for the native-caption path alone. The free plan is suitable for initial validation only. No plan was purchased and no automatic recharge was enabled. Provider charges are separate from MiMo token-cost metrics. Review the dashboard quota before sustained monitoring; per-process pacing does not coordinate rate limits across multiple workers.
+
+## Known limitations and next step
+
+No claim is made that blocked YouTube extraction has been restored before the provider is authenticated and tested live. Caption paste remains the working fallback. Existing grocery, payment and launch limitations below remain historical unless explicitly superseded above.
+
+## Historical checkpoint, preserved verbatim
+
 # Cookthis checkpoint: current live status
 
 The Home redesign is live at https://cookthis.app: the three-step guide comes first, followed by recipes beneath their own heading in a ruled menu layout. AKA Foods typography, colours and original artwork are retained.
