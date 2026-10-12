@@ -1,3 +1,21 @@
+# Stripe signed-in account check
+
+2026-10-12. Dashboard sign-in is now confirmed. The browser initially showed a separate Cookthis sandbox whose account did not match the API keys configured in the app. Switched to the matching Cookthis account in test mode and opened Tax settings, Add head office address.
+
+| Check | Result |
+| --- | --- |
+| Dashboard authentication | Signed in. |
+| Correct account | Browser now matches the supplied API-key account. No credentials changed. |
+| Head-office address | Blank in the dashboard form. API still reports pending, missing head_office. |
+| Setup changes | None submitted. Address form is open for the operator. |
+| Purchase and refund | Not run; automatic-tax Checkout remains blocked. |
+
+Required next input: actual business street address, city, state and ZIP, or operator completion of the open Stripe form. Then finish tax setup and resume the previously authorized hosted test purchase, webhook verification and full refund. No address or tax registration was invented. Product and price setup from earlier checkpoints remains in place. No application code changed. Phase 6 live acceptance remains open.
+
+---
+
+# Historical checkpoints, preserved unchanged
+
 # Stripe setup handoff checkpoint
 
 2026-10-12. The operator authorized browser control to complete Stripe setup. The open Stripe tab is at the sign-in screen. No email or password is filled in, and the assistant has no dashboard session. The tab is retained for the operator to sign in and complete any authentication challenge.
