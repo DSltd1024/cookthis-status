@@ -1,3 +1,59 @@
+# Cookthis checkpoint: steps first, recipes as a menu
+
+The operator asked for the steps above the recipes, a distinct heading for the recipes, and a more deliberately designed layout.
+
+## What changed
+
+Home now opens its lower section with a blue three-step guide: bring the recipe, check the details, make it your dinner. An oversized heading, open columns, numbered rules and one asymmetric corner give this section a clear identity. On phones the steps form a vertical sequence.
+
+The recipes follow beneath their own heading, “A few recipes to try.” The previous three coloured cards are replaced by a ruled recipe menu with course labels, larger dish names, ingredient counts and arrow links. All three remain clearly labelled original Cookthis test recipes. Outfit, AKA Foods colours, the original artwork and footer logo are retained.
+
+Source commit: 671f5ab. The change is limited to Home and its visual checks. No household data, recipe model, extractor, shopping or cooking logic changed.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Next.js production build and bundled type checks | Passed |
+| macOS browser checks, phone/tablet in light/dark | 4 passed |
+| Linux browser checks, phone/tablet in light/dark | 4 passed |
+| Home screenshot baselines | 8 updated and then verified without updating snapshots |
+| Steps before recipes | Explicit browser assertion passed on all eight combinations |
+| Dedicated recipe heading and three working example links | Existing/expanded browser assertions passed |
+| Visual inspection | Phone dark and tablet light reviewed for wrapping, spacing and hierarchy |
+
+Exact verification commands:
+
+```sh
+pnpm --filter @cookthis/web build
+pnpm exec playwright test tests/e2e/recipes.spec.ts --grep 'home is usable'
+```
+
+Linux used the official Playwright v1.64.0 container against the same local production build, with E2E_EXTERNAL=1 and E2E_BASE_URL pointing to the host test server. The final runs above did not update screenshots. The wider application suite and live extraction/payment tests were not repeated for this Home-only change. Earlier results are historical below.
+
+## Live deployment
+
+The revised Home is live at https://cookthis.app. Public Home returned HTTP 200 with successful certificate verification. The health endpoint returned status ok and modelConfigured true. Caddy, web, worker, Redis and backup are all running and healthy.
+
+The real browser confirms the three-step guide appears before “A few recipes to try.” and the three recipe links use the new menu layout. A live screenshot was saved locally. Only the web container was rebuilt and replaced. No credentials or database migrations were changed.
+
+The previous web image is retained as cookthis-web:before-home-editorial-20261012. Runtime rollback from /opt/cookthis on the server:
+
+```sh
+docker image tag cookthis-web:before-home-editorial-20261012 cookthis-web:latest
+docker compose --env-file .env -f infra/docker-compose.yml up -d --no-deps --force-recreate --wait web
+```
+
+Restore the intended source revision before a later rebuild. The server still uses an uploaded source archive without a private Git remote.
+
+## Known limitations and next work
+
+The requested Home redesign is complete and live. No new blocker was found. The existing launch limitations remain as recorded below, including the production YouTube source sign-in block, incomplete production payment/grocery attribution setup, R2 upload integration, Sentry, independent live video accuracy validation, creator verification, real-device acceptance and legal review. This visual change does not resolve or retest those integrations.
+
+The previous mobile Lighthouse result of 92 performance and 100 accessibility is historical from the preceding AKA update. Lighthouse was not rerun for this layout revision. Next work remains the documented launch limitations, or further visual direction from the operator.
+
+## Historical checkpoint, preserved verbatim
+
 # Cookthis checkpoint: AKA brand update
 
 The operator requested AKA Foods brand-book styling and a live update. This checkpoint records that visual change independently from the existing launch limitations below.
