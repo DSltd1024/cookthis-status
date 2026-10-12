@@ -1,3 +1,13 @@
+# Cookthis checkpoint: current live status
+
+The Home redesign is live at https://cookthis.app: the three-step guide comes first, followed by recipes beneath their own heading in a ruled menu layout. AKA Foods typography, colours and original artwork are retained.
+
+The production health endpoint was checked again for this checkpoint and returned status ok with modelConfigured true. No application changes were made since source commit 671f5ab. The previous eight phone/tablet browser checks passed in light and dark mode; those tests were not rerun for this status-only checkpoint.
+
+The requested design work is complete. Existing launch limitations and all verification details remain in the previous checkpoint preserved below. No new extraction, payment or grocery acceptance result is claimed.
+
+## Previous checkpoint, preserved verbatim
+
 # Cookthis checkpoint: steps first, recipes as a menu
 
 The operator asked for the steps above the recipes, a distinct heading for the recipes, and a more deliberately designed layout.
