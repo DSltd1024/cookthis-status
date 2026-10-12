@@ -1,3 +1,9 @@
+# Phase 6 continuation checkpoint
+
+2026-10-12. Published immediately at the operator’s request before continuing. The verified timeline repair and billing increment remain deployed locally. The operator dashboard, affiliate reconciliation, creator claim and links, media kit and outreach helper are the active work. Live Stripe purchase and refund acceptance remains unverified; configuration will be checked during this continuation. No new test result is claimed in this immediate checkpoint.
+
+## Latest full checkpoint and historical results, unchanged
+
 # Second-screen repair and Phase 6 billing checkpoint
 
 2026-10-12. The requested second-screen repair is complete and deployed at http://localhost:3000. Household trial and billing code is also deployed locally. Phase 6 is in progress, not complete. There is no public production deployment and no verified live Stripe purchase.
