@@ -1,3 +1,98 @@
+# Second-screen repair and Phase 6 billing checkpoint
+
+2026-10-12. The requested second-screen repair is complete and deployed at http://localhost:3000. Household trial and billing code is also deployed locally. Phase 6 is in progress, not complete. There is no public production deployment and no verified live Stripe purchase.
+
+Source commits: 32aacca for the timeline repair, a3879c1 for household trials and billing.
+
+## Second-screen repair
+
+The timeline uses two separate columns: step text on the left, bars on the right. The time axis is above the bars and shares their column boundaries. Bars and the current-time marker are contained within the bar column. Long instructions wrap within the text column. Narrow screens can scroll the schedule horizontally.
+
+Equipment identifiers are shown as Oven, Hob 2 and Air fryer. The duplicated default serve-time sentence is gone; meaningful delay messages remain. The deployed real saved meal was reopened in the browser and inspected after the update.
+
+The visual fixture includes a long instruction and multiple equipment names. It checks both screenshots and geometry: no bar may enter the text column, and the axis must align above the tracks. Phone/tablet and light/dark baselines are committed for macOS and Linux.
+
+## Billing continuation
+
+- Saving the second dish starts one 14-day trial for the household. Planning the seeded multi-dish example also starts it. No card or Stripe subscription is created for the free trial.
+- Protected Postgres fields and a database function enforce trial expiry and prevent restarting it. Multi-dish planning, new helper invitations and voice require active access. Shopping and single-dish cooking remain free. Existing cooking sessions can finish.
+- The meal screen offers one Premium plan with monthly and yearly choices. Checkout and the customer portal are restricted to the household owner. Stripe Checkout requests automatic tax and provider-managed currency presentation.
+- Raw-body signed webhooks retrieve current Stripe objects. Event IDs and entitlement changes are stored in the same transaction. Replay does not duplicate the grant or invoice. Cancellation preserves the paid period; a full refund of the latest invoice cancels that subscription and revokes access. An old event cannot restore it.
+- Household deletion cancels billing and expires an unfinished checkout first. Payment records are included in the household export and cascade on deletion. A Stripe outage prevents deletion from falsely succeeding while a subscription remains active.
+- Plan and helper checks reuse their existing database transaction. Six simultaneous planning requests pass without exhausting the connection pool.
+- Migrations 0009 through 0011 are applied locally. The web container has been rebuilt and is healthy; the existing worker and Redis are healthy.
+
+The billing setup and exact behavior are documented in BILLING.md. A pending checkout retains its selected interval until its 30 to 60 minute expiry. This is a known usability limitation, not a second plan.
+
+## Verification
+
+| Check | Result | Scope |
+| --- | --- | --- |
+| TypeScript | Passed | Web, worker, packages and tests |
+| Unit suite | 252 passed | Includes four new signed-webhook route tests |
+| Measured line coverage | 98.48% | Existing configured core modules; not a whole-application or billing coverage claim |
+| Signed webhook rejection | Passed | Missing, tampered and stale signatures, wrong mode, oversized body; provider/database error returns a retryable response |
+| Real Supabase household checks | Passed | Isolation, confirmation, correction audit, versioning, shopping snapshots, helper/push ownership and cascading deletion |
+| Billing database integration | Passed | Owner isolation, protected fields, one trial, expiry, concurrent replay, invoice ledger, cancellation grace, refund and old-event safety |
+| Browser trial/persistence test | Passed | Real local email sign-in, save second dish, refresh, six simultaneous plans, expire trial, retain shopping |
+| Final full browser suite | 58 passed, 30 skipped, 2.9 minutes | Skips are intentional duplicate device scenarios |
+| Two-browser helper scenario | Passed | Anonymous helper, two-minute Ack fallback, voice Next through the real API, Done and read-only timeline |
+| Linux visual regression | 12 passed, 6.4 seconds | 20 snapshots: Meal, Plan, Cook, Helper and second screen in four device/theme combinations |
+| Production builds | Passed | Next.js, worker and latest web Docker image |
+| Deployed browser check | Passed | Real saved meal at localhost:3000, separate Gantt columns, plain equipment names, one serve-time sentence |
+| Live Stripe purchase and refund | Not run | STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_MONTHLY and STRIPE_PRICE_YEARLY are empty |
+| New live extraction or grocery order | Not run | Historical results below are unchanged |
+
+The billing database integration injects a Stripe transport. It does not contact Stripe or prove that the operator's account is configured. The browser tests use real local Supabase email links and the local Mailpit inbox; recipe extraction contracts use the isolated test model. No new paid model call is claimed.
+
+## Three-dish conductor regression at 60x
+
+| Scenario | Completed steps | Dish finish spread | Maximum distance from serve time | Serve-time shift | Read p50 | Read p95 | Oven conflicts |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| On time | 7 | 0.347 min | 0.347 min | 0.636 min | 40 ms | 68 ms | 0 |
+| Injected 12-minute delay | 7 | 0.355 min | 0.355 min | 12.877 min | 39 ms | 56 ms | 0 |
+
+Both scenarios passed the five-minute serving window. They include three hot dishes and a dessert baked earlier. These are local measurements, not a mobile-network or Lighthouse certification.
+
+## Failures resolved during this work
+
+The first billing browser setup sent extra fields to the strict meal API and was correctly rejected. The test now sends the supported fields. An initial full run passed 54 checks and failed four expected meal screenshots because the trial panel had been added. Those layouts were inspected, the baselines updated on macOS and Linux, and the final full suite passed. An intermediate suite was stopped when its build was superseded; it is not counted as a completed run.
+
+Code review also found a nested-transaction connection risk in the new premium checks. The checks now reuse the caller's transaction, and the six-request browser regression passes.
+
+## How to test
+
+With local Supabase and the test Redis running:
+
+```sh
+pnpm db:local
+pnpm typecheck
+pnpm test:coverage
+pnpm test:database
+pnpm exec tsx apps/web/scripts/check-billing.ts
+pnpm build
+docker compose -f infra/compose.test.yml up -d --wait
+pnpm test:e2e
+```
+
+For the targeted visual repair:
+
+```sh
+E2E_EXTERNAL=1 E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test tests/e2e/helper-visual.spec.ts tests/e2e/conductor-visual.spec.ts
+```
+
+Open a saved meal, Plan the night, then the live second screen. Steps stay on the left and bars stay on the right. On a narrow screen, swipe within the schedule to see its full width.
+
+## Incomplete work and next steps
+
+This is an intermediate checkpoint, not Phase 6 acceptance. Live payment verification cannot run until the four Stripe settings are configured. The operator dashboard, affiliate reconciliation, creator claiming and public links, media kit and outreach helper remain unimplemented in Phase 6. They are not represented as working or as blocked solely by Stripe. No Phase 7 work has started.
+
+Physical-phone push and microphone acceptance, the independent extraction-reference review, Kroger customer OAuth/cart write, affiliate approvals, public deployment and fresh-VM verification remain open as previously reported. No attributed grocery order or live paid subscription is claimed.
+
+Next: finish the remaining Phase 6 creator/reporting features and run the real Stripe test-mode purchase/refund acceptance once configured. The status channel contains only this report and historical checkpoint Markdown, never application code or secrets.
+
+## Historical checkpoints, unchanged
+
 # Second-screen repair checkpoint
 
 2026-10-12. The repair is deployed at http://localhost:3000. This is a local site, not a public production deployment. Phase 6 is now in progress and is not declared complete.
