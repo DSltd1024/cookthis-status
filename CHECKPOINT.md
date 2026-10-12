@@ -1,3 +1,20 @@
+# Hetzner setup checkpoint
+
+The operator authorized preparing the Cookthis project and server in the logged-in browser. Hetzner rejected the New project action because account verification is required. The browser is left on the official account verification page for the operator to complete.
+
+| Item | Status |
+| --- | --- |
+| Existing Hetzner sign-in | Verified in the requested browser profile |
+| Project cookthis | Not created, blocked by account verification |
+| Server cookthis-1 | Not created or purchased |
+| SSH key | No key generated or uploaded in this attempt |
+| Public IPv4 | Not assigned |
+| Application or test changes | None |
+
+Next: the operator completes Hetzner account verification. Then resume project and server preparation with Falkenstein, Ubuntu 24.04, CPX32 and the requested options. Review the actual quoted price before the paid creation step. Phase 7 remains incomplete; all previous test results, limitations and deployment gates below are unchanged. No account documents, card information, secrets or screenshots are published here.
+
+## Prior full checkpoint and tables, preserved verbatim
+
 # Checkpoint publication, 2026-10-12 07:40:19 UTC
 
 Published again at the operator's request. No application changes or new test runs since the Phase 7 checkpoint below. Application HEAD remains 6b475a2 and the working tree is clean. All measurements below retain their original verification scope and time; local service health has not been rechecked for this publication.
