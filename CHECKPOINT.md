@@ -1,3 +1,20 @@
+# Production R2 credential checkpoint
+
+The operator supplied R2 S3 credentials. R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY were updated only in the local private production environment and server /opt/cookthis/.env. The remote update changed only these two fields. The additional Cloudflare API token was not stored because it is not needed for the configured S3 credentials.
+
+| Check | Result |
+| --- | --- |
+| R2 access key ID and secret | Stored in both production files |
+| Local and server environment | SHA256 matches |
+| Permissions | Owner-only 0600 |
+| Local production file | Ignored by Git |
+| R2 authentication, bucket access or uploads | Not tested in this credential-only step |
+| Application deployment | Not started |
+
+No application code was changed. R2 bucket access and application integration, Resend domain/webhook/SMTP setup, production billing and grocery credentials, and the remaining launch acceptance checks still require verification as recorded below. No credential values are published.
+
+## Prior full checkpoints and result tables, preserved verbatim
+
 # Production Resend credential checkpoint
 
 The operator supplied the Resend API key. RESEND_API_KEY was updated in the local private production environment and server /opt/cookthis/.env. The remote update changed only this field and retained the other server settings.
