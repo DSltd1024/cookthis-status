@@ -1,3 +1,44 @@
+# Phase 6 Stripe setup checkpoint
+
+2026-10-12. Stripe test credentials are configured for the separate Cookthis account. The requested purchase and refund remain blocked by missing Stripe Tax head-office configuration. Phase 6 is not accepted and Phase 7 has not started.
+
+## Verified in this pass
+
+| Check | Result | Evidence or limitation |
+| --- | --- | --- |
+| Stripe account | Passed | Stripe API identifies the account as Cookthis, country US. All requests used a test-mode key. |
+| Secret storage | Passed | Supplied keys, price IDs and local webhook signing secret are in the ignored root .env. Permissions are 0600. No credentials committed or published. |
+| Premium product | Created | Cookthis Premium, personal-use SaaS tax classification. |
+| Monthly price | Created | USD 4.99 per month, tax exclusive. |
+| Yearly price | Created | USD 39 per year, tax exclusive. |
+| Hosted billing portal | Configured | Payment-method updates, invoice history and cancellation at period end. |
+| Local webhook listener | Ready | Stripe CLI 1.53.1 connects to the test account and forwards the six billing event types to localhost:3000/api/billing/webhook. Signing secret saved and web container restarted. End-to-end payment event delivery has not yet been tested. |
+| Automatic-tax Checkout | Blocked | Stripe Tax reports pending, missing_fields: head_office. A real Checkout creation request was rejected before a session or payment was created. |
+| Purchase grants Premium once | Not run | Requires automatic-tax Checkout to succeed first. |
+| Full refund removes Premium | Not run | No successful purchase exists to refund. |
+| Local service restart | Passed | Web, worker and Redis healthy; localhost:3000/healthz returns status ok. Signed-in household page loads in the real browser. |
+| Regression tests | Not rerun | No application behavior changed in this pass. Earlier 266 unit and 60 browser passes are preserved below, not counted as live Stripe acceptance. |
+
+## Exact provider failure
+
+StripeInvalidRequestError: "You must have a valid head office address to enable automatic tax calculation in test mode. Visit https://dashboard.stripe.com/test/settings/tax to update it."
+
+The business address was requested from the operator. No address was invented, no tax registration was asserted, and automatic tax remains enabled. Stripe's setup instructions are at https://docs.stripe.com/tax/set-up. No real money moved and no test purchase or refund completed.
+
+## Resume and verification
+
+Enter the actual business head-office address in the Cookthis test account at https://dashboard.stripe.com/test/settings/tax, or supply it so the test account can be configured through Stripe's API. Recheck Tax settings, complete hosted test Checkout, verify the signed payment webhook grants the household Premium once, then refund the latest payment in full and verify it returns to free without a new trial. Publish the resulting table in a new checkpoint.
+
+The local webhook listener must be running during that test. It is a local development forwarder, not a deployed public webhook endpoint. A production webhook and a live public site are not claimed. The test products and prices remain available for the next attempt.
+
+Local restart command: `node artifacts/start-phase5.mjs`. Health check: `curl -fsS http://localhost:3000/healthz`. The ignored local listener launcher is `node artifacts/stripe-listen-local.mjs`; do not start a duplicate while the current listener is running. The general provider setup and signed webhook test procedure are in BILLING.md.
+
+Other Phase 6 external acceptance limits remain: live Impact reconciliation and an actual creator bio challenge are unverified. Historical application verification and earlier limitations follow unchanged.
+
+---
+
+# Historical checkpoints, preserved unchanged
+
 # Phase 6 implementation checkpoint
 
 2026-10-12. Local app: http://localhost:3000. Source implementation commits: 1f3342f and dd196b5.
