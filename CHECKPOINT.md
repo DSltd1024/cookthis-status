@@ -1,3 +1,11 @@
+# Checkpoint publication, 2026-10-12 07:40:19 UTC
+
+Published again at the operator's request. No application changes or new test runs since the Phase 7 checkpoint below. Application HEAD remains 6b475a2 and the working tree is clean. All measurements below retain their original verification scope and time; local service health has not been rechecked for this publication.
+
+Phase 7 remains incomplete. Next work is the outstanding local behavior, production configuration, fresh-VM deployment and real-device, email, monitoring and provider acceptance checks listed below. This publication does not announce a public launch.
+
+## Full prior checkpoint and tables, preserved verbatim
+
 # Phase 7 checkpoint, 12 October 2026
 
 Status: local release candidate. Phase 7 is not complete and no public launch is claimed.
