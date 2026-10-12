@@ -1,3 +1,25 @@
+# Hetzner server preparation checkpoint
+
+Account verification no longer blocks project creation. The cookthis project was created successfully in the operator's logged-in Hetzner account.
+
+| Item | Verified status |
+| --- | --- |
+| Project | cookthis created |
+| Prepared server | cookthis-1, CPX32, shared x86 AMD, 4 vCPU, 8 GB RAM, 160 GB SSD |
+| Location and image | Falkenstein and Ubuntu 24.04 selected |
+| Networking | Public IPv4 and IPv6 selected |
+| Optional services | No additional volumes, firewall or backups selected, as requested |
+| Console price | USD 41.99/month server plus USD 0.60/month IPv4, total USD 42.59/month excluding VAT |
+| SSH | Dedicated Ed25519 key generated locally; public key filled in the Add SSH key dialog as mac, not yet submitted |
+| Purchase | Not submitted; no server or IPv4 allocated |
+| App changes and test runs | None |
+
+The browser is left at the SSH-key confirmation step. The operator must add the prepared key, review the configured server and price, then complete Create & Buy now. Adding the key authorizes SSH access for its holder; purchasing starts recurring charges. The private key remains outside the application repository and is not published. No credentials, public key, account screenshots or account identifiers are included in this public report.
+
+Next: after the operator completes creation, verify server status and IPv4 and proceed with deployment. Phase 7 and prior provider acceptance gaps remain incomplete. All earlier measurements are historical, not rerun during this setup.
+
+## Earlier checkpoint and full result tables, preserved verbatim
+
 # Hetzner setup checkpoint
 
 The operator authorized preparing the Cookthis project and server in the logged-in browser. Hetzner rejected the New project action because account verification is required. The browser is left on the official account verification page for the operator to complete.
