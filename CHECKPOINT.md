@@ -1,3 +1,44 @@
+# Phase 6 live Stripe purchase and refund checkpoint
+
+2026-10-12. The operator completed the head-office address in the Cookthis test account. Stripe Tax is active. The real Stripe hosted test-mode purchase and full-refund acceptance now passes against the local Cookthis application. No real money moved. Phase 7 has not started.
+
+## Acceptance results
+
+| Check | Result | Measured evidence |
+| --- | --- | --- |
+| Correct account | Passed | Dashboard and supplied API key use the same Cookthis test account, distinct from the separate Cookthis sandbox. |
+| Stripe Tax readiness | Passed | Tax settings API reports active; missing head-office blocker resolved by the operator. |
+| App-to-hosted Checkout | Passed | Signed-in household opened monthly Premium from the app after starting its multi-dish trial. Checkout visibly labelled Sandbox. |
+| Test purchase | Passed | USD 4.99 paid using Stripe's 4242 test card and a clearly named test customer. Session complete, payment paid. |
+| Automatic tax | Passed | Enabled; calculation status complete. Checkout showed USD 0.00 tax, USD 4.99 total. This does not prove tax collection in a taxable registered jurisdiction. |
+| Payment webhooks | Passed | invoice.paid, customer.subscription.created and checkout.session.completed delivered by the connected Stripe CLI, each HTTP 200 from the real signed webhook route. |
+| Household Premium | Passed | Database plan premium, subscription active, one USD 4.99 invoice ledger row. Real browser displayed Premium through November 12, 2026. |
+| Duplicate handling | Passed | Fetched the actual Checkout event from Stripe and replayed it with a fresh SDK-generated test signature. HTTP 200, duplicate true, billing snapshot unchanged. This replay was locally signed, not a second Stripe-origin delivery. |
+| Full refund | Passed | Stripe refund succeeded for the complete USD 4.99 test payment. |
+| Refund webhooks | Passed | charge.refunded and customer.subscription.deleted delivered by Stripe CLI, both HTTP 200. |
+| Access removed | Passed | Database plan free, premium_until null, subscription canceled, refunded true, trial ended. Browser after refresh showed the trial-ended/free-plan state. |
+| Ledger | Passed | One 499-cent payment row and one 499-cent refund row, net zero USD. No duplicate invoice row. |
+| Credentials | Protected | Remain only in ignored .env with 0600 permissions; no keys or webhook secrets committed or published. |
+| Application regression | Historical | No application behavior changed in this pass. Earlier 266 unit and 60 browser passes are preserved below; not rerun for this configuration-only verification. |
+
+## What works and how to verify
+
+The hosted checkout, real signed payment events, Premium grant, idempotent replay, full refund, subscription cancellation and removal of household access have all been exercised against the real Stripe test API and local database. The existing signed-in browser household was used, with a Cookthis test dinner. Its test trial is now ended as required by the full-refund policy; its recipes and meals remain intact.
+
+Evidence screenshots remain local at artifacts/stripe-premium-purchase.png and artifacts/stripe-premium-refund.png. The local verification script is artifacts/stripe-live-verify.mjs, contains no keys, and reads the ignored environment. `node artifacts/stripe-live-verify.mjs` inspects this completed acceptance session; `node artifacts/stripe-live-verify.mjs replay` repeats the locally signed duplicate check. Secrets and private identifiers are not copied into this public report.
+
+General repeat procedure: start the local app, keep the Stripe CLI listener forwarding the six billing event types to localhost:3000/api/billing/webhook, open a household with a multi-dish trial, choose monthly Premium and complete hosted Checkout with Stripe's test card. Check Premium in the browser and database, refund the latest test payment in full, then refresh and confirm Free. See BILLING.md for configuration and existing automated checks.
+
+## Limits and next work
+
+This is a real-provider test-mode acceptance on localhost, not a production deployment. The webhook currently uses the local CLI forwarder; a public production endpoint, live-mode payments and live tax registrations remain deployment tasks. Only monthly purchase/refund was exercised; the yearly price exists but was not purchased. No additional registrations or business identity facts were invented.
+
+Stripe acceptance is complete. Phase 6's other external checks remain separate: configured live Impact affiliate reporting and a real creator's bio challenge are unverified. Their injected and database tests, the implemented operator dashboard and creator workflows, and all earlier results remain in the historical checkpoints below. Stop here for the phase checkpoint, with no Phase 7 work started.
+
+---
+
+# Historical checkpoints, preserved unchanged
+
 # Stripe signed-in account check
 
 2026-10-12. Dashboard sign-in is now confirmed. The browser initially showed a separate Cookthis sandbox whose account did not match the API keys configured in the app. Switched to the matching Cookthis account in test mode and opened Tax settings, Add head office address.
