@@ -1,3 +1,86 @@
+# Production deployment checkpoint, 12 October 2026
+
+Cookthis is live at https://cookthis.app and https://www.cookthis.app. The requested email setup, production deployment and monitoring configuration have been performed. The website and email path are verified. A real YouTube source-access failure remains active and is visible in monitoring. This is not a declaration that every original Phase 7 acceptance gate is complete.
+
+## Deployment and verification
+
+| Check | Result | Evidence and scope |
+| --- | --- | --- |
+| Fresh server | Passed | Ubuntu 24.04.4 LTS, no Docker initially; source uploaded from the local Git archive |
+| infra/deploy.sh | Passed | Installed Docker, built standard web/worker/migration/backup images, ran migrations and started services |
+| Hosted migrations | Passed | 15 entries in drizzle migration journal |
+| RLS observation | Verified | 29 public tables have RLS enabled, a count rather than a new full permission audit |
+| Containers | Healthy | Caddy, web, worker, Redis and backup |
+| https://cookthis.app | HTTP 200 | TLS verification result 0 |
+| https://www.cookthis.app | HTTP 200 | TLS verification result 0 |
+| Public /healthz | HTTP 200 | status ok, modelConfigured true |
+| Direct origin certificate | Validated | HTTPS request addressed directly to the origin with cookthis.app as hostname, TLS verification result 0 |
+| Cloudflare TLS | Full (strict) | Read from live dashboard |
+| Owner sign-in | Passed | Resend delivered sign-in mail; a fresh link opened the production household |
+| Older sign-in link | Expired | Initial link failed as expired; a fresh request succeeded, no failure concealed |
+| Owner /ops | Passed | Production authenticated owner opened the operator dashboard |
+| Plain-text recipe extraction | Draft produced | Real public API and MiMo, original Cookthis test recipe, 4 ingredients, 25.876 seconds; the 25-second target was exceeded by 0.876 seconds |
+| Inbound recipe email | Passed | Original Cookthis test recipe sent to private recipes-subdomain address, real signed webhook queued processing, database status complete with Paprika potatoes saved |
+| Worker type check | Passed | Current worker source |
+| Unit suite | 274 passed | 28 test files; no new full browser, coverage or twenty-video live suite run in this turn |
+| Operational script checks | Passed | Node syntax, shell syntax and git diff whitespace validation |
+| Synthetic metrics exclusion | Passed | Failure count remained 2 before/after a fresh synthetic probe on the updated worker |
+
+Local source commit: 5cac75c. The web deployment uses the prior application source plus the current production environment. The worker was rebuilt and restarted with the synthetic-metrics exclusion. The new operational scripts and deploy script are on the server. No credentials were committed or published.
+
+## Email setup
+
+Resend sending for cookthis.app and receiving for recipes.cookthis.app are both verified. Tracking is disabled. The root-domain Cloudflare mail routing and its existing SPF/DKIM records remain intact. Six additional records were added through the Cloudflare DNS interface and their public resolution was verified.
+
+| Type | Name within cookthis.app | Content or purpose | Status |
+| --- | --- | --- | --- |
+| TXT | resend._domainkey | Resend-generated public DKIM key | Verified |
+| MX | send | feedback-smtp.eu-west-1.amazonses.com, priority 10 | Verified |
+| TXT | send | v=spf1 include:amazonses.com ~all | Verified |
+| CNAME | rsend | send.forge.rmta.net, DNS only | Verified |
+| TXT | resend._domainkey.recipes | Resend-generated public DKIM key | Verified |
+| MX | recipes | inbound-smtp.eu-west-1.amazonaws.com, priority 10 | Verified |
+
+Cloudflare file import was unavailable because the browser extension lacked file-URL upload permission. All six records were instead added individually; no extension permissions were changed.
+
+The receiving capability routes mail on recipes.cookthis.app. The webhook subscribes to email.received at https://cookthis.app/api/email/inbound. Its signing secret is stored only in the private production environment on the Mac and server. No additional credential was requested. The real receiving test confirms webhook authentication and processing, not merely a mocked event.
+
+Supabase Auth custom SMTP is saved: smtp.resend.com, port 465, username resend, sender hello@cookthis.app, name Cookthis, using the supplied Resend key. The Site URL is https://cookthis.app with callback and confirmation redirect patterns allowed. A fresh email sign-in succeeded in the same browser. The household's recipe-reminder preference remained off during testing.
+
+## Monitoring and real failure
+
+The current Better Stack Free allowance supports the two HTTP monitors and one heartbeat used here. No paid plan upgrade was purchased. Reference: https://betterstack.com/uptime .
+
+| Monitor | Configuration | Observed result |
+| --- | --- | --- |
+| Home | https://cookthis.app, every 3 minutes, certificate verification on, email to existing primary responder | Up |
+| Dependencies | https://cookthis.app/healthz, requires status ok, every 3 minutes | Up |
+| Live video fixture | Expected every 15 minutes, 5 minutes of grace; uncached source/model attempt | Down, real source failure reported |
+| Cron | /etc/cron.d/cookthis-synthetic, every 15 minutes; cron service active | Installed and manual equivalent runs verified |
+| Failure notification | Better Stack failure endpoint plus support email throttled to one/hour | Failure accepted by Better Stack; support email delivered by Resend |
+
+The fixture is the public Allrecipes three-ingredient peanut-butter-cookie YouTube video already in the fixture set. A dedicated cache key forces source collection; a missing recipe, empty ingredient evidence or missing expected ingredient is a failure. The first observed check failed in 2.577 seconds. The final metrics check failed in 2.503 seconds with the exact reason: "YouTube requires a sign-in check for this request. Paste the caption instead." Better Stack showed an active Down incident. No platform login or proxy was used and no success heartbeat was sent for the failure.
+
+The check and scripts are shipped in apps/worker/scripts/synthetic.mjs and infra/synthetic.sh. Run on the server with `cd /opt/cookthis && bash infra/synthetic.sh`. Exit 1 and the Down monitor are intentional evidence of the current source failure. Logs are in /var/log/cookthis-synthetic.log. The heartbeat URL is private and is not published here. Future synthetic successes/failures do not inflate household extraction totals. The first two probes happened before that exclusion and remain in the initial day's historical counters.
+
+Better Stack native notifications target the existing primary responder. Synthetic failures additionally go to support@cookthis.app; the real failure email showed delivered. A separate Sentry deployment/alert test was not part of this completed setup.
+
+## What remains and what is needed
+
+No further credential is needed for the verified email and HTTPS deployment. Automatic YouTube video retrieval from this VPS is blocked by the platform's sign-in check. Users can paste creator captions or recipe text; this path produced a real draft. The video access issue needs further source investigation within the existing no-login/no-proxy rules. Do not count the deployed site or healthy dependencies as proof of working video retrieval.
+
+Production Stripe and Kroger are still unconfigured because supplied keys belong to test and certification environments. Impact attribution, live grocery ordering, real creator verification and R2 application integration remain unverified/incomplete as previously recorded. The R2 credentials are stored, which is not proof of integrated uploads. Actual Android/iPhone sharing, legal review, independent twenty-video accuracy acceptance and a production backup restore remain outstanding. No grocery order, Stripe charge, outreach message or launch post was sent in this turn.
+
+The server received a Git archive, not a Git clone. A private Git remote and server checkout are still needed before infra/update.sh can pull future source updates. This limitation is documented in DEPLOY.md. The successful clean server deployment does not erase the rest of the original definition of done.
+
+## Owner access and next steps
+
+Open https://cookthis.app, choose Your kitchen and request a sign-in email using the configured operator address. Open the newest link in the same browser. /ops is available to that verified owner.
+
+The next work is to resolve the production video source issue, arrange private source updates, finish the remaining live partner acceptance and run physical-device sharing and backup-restore checks. Stop at this checkpoint per the operator's request. Historical results below are preserved; the current deployment and email evidence supersede only the older statements that those were not yet deployed or verified.
+
+## Historical checkpoints and result tables, preserved verbatim
+
 # Production R2 credential checkpoint
 
 The operator supplied R2 S3 credentials. R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY were updated only in the local private production environment and server /opt/cookthis/.env. The remote update changed only these two fields. The additional Cloudflare API token was not stored because it is not needed for the configured S3 credentials.
