@@ -1,3 +1,39 @@
+# Second-screen repair checkpoint
+
+2026-10-12. The repair is deployed at http://localhost:3000. This is a local site, not a public production deployment. Phase 6 is now in progress and is not declared complete.
+
+## What changed
+
+The Gantt has separate text and bar columns. The time axis sits above the bar column, aligned with its boundaries. Bars and the current-time marker are clipped inside that column, so they cannot cover words. Narrow screens can scroll the schedule horizontally. Equipment names read Oven, Hob 2 and Air fryer instead of internal identifiers. The duplicated default serve-time sentence is removed; meaningful delay messages remain.
+
+## Verification
+
+| Check | Result | Scope |
+| --- | --- | --- |
+| Production web build | Passed | Next.js and Docker image |
+| macOS visual regression | 8 passed | Plan, Cook, Helper and second screen, phone/tablet, light/dark |
+| Linux baseline run | 8 passed | Same screens against the deployed container |
+| Final macOS regression without baseline updates | 8 passed in 3.7 seconds | Saved screenshots match |
+| Geometry assertions | Passed | Bars cannot cross into labels; time axis aligns above tracks |
+| Live browser review | Passed | Refreshed the real saved meal's second screen, friendly labels and one serve-time sentence |
+
+Long step text and multiple equipment names are included in the regression fixture. The new screenshot baselines are committed with the fix. No extraction, payment or grocery-order result is inferred from these visual checks.
+
+## How to test
+
+```sh
+pnpm --filter @cookthis/web build
+pnpm exec playwright test tests/e2e/helper-visual.spec.ts tests/e2e/conductor-visual.spec.ts
+```
+
+Open a saved meal, Plan the night, then the live second screen. Read the steps on the left and the bars on the right. On a narrow phone, swipe horizontally within the schedule.
+
+## Continuing
+
+Phase 6 implementation is in progress: household premium, Stripe billing, operator reporting and creators. Stripe and Impact credentials are empty, so live purchase/refund and affiliate reporting acceptance remain blocked by configuration. No Phase 6 completion or live payment is claimed. All earlier limitations remain as recorded below.
+
+## Historical checkpoint, unchanged
+
 # Phase 5 checkpoint: helpers and voice
 
 2026-10-11. Phase 5 is implemented and running at http://localhost:3000. Automated checks and real MiMo calls passed. Physical-phone push delivery and microphone recognition are still unverified. The public production deployment is not complete. Stop here before Phase 6.
