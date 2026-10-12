@@ -1,3 +1,20 @@
+# Production database credential checkpoint
+
+The operator supplied the existing Supabase database password and authorized storing it only in production DATABASE_URL. The local production environment and server /opt/cookthis/.env now have the completed session-pooler URI with sslmode=require. The password was not added to any separate password variable, local development configuration, tracked file or public report.
+
+| Check | Result |
+| --- | --- |
+| Production DATABASE_URL | Updated on Mac and server |
+| Local and server files | SHA256 matches |
+| Local production file | Ignored by Git |
+| Environment access | Owner-only permissions retained |
+| Database authentication or migrations | Not run in this step |
+| Application deployment | Not started |
+
+Resend and R2 configuration, live billing/grocery credentials and the remaining production acceptance checks remain as listed below. No application changes or tests were run. The requested credential update is complete.
+
+## Previous full checkpoints and tables, preserved verbatim
+
 # Production environment preparation checkpoint
 
 The operator reported the server is running and both domain names point to it. SSH access verified the hostname cookthis-1 and Ubuntu 24.04.4 LTS. No application deployment, database migration, paid purchase or production email was performed in this step.
