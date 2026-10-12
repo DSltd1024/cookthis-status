@@ -1,3 +1,42 @@
+# Production environment preparation checkpoint
+
+The operator reported the server is running and both domain names point to it. SSH access verified the hostname cookthis-1 and Ubuntu 24.04.4 LTS. No application deployment, database migration, paid purchase or production email was performed in this step.
+
+A private production environment was created from the checked-in template. A local .env.production and server /opt/cookthis/.env contain identical bytes; both are permission 0600 and the local file is ignored by Git. The existing local development .env was preserved. No credential values, private addresses, project identifiers or environment contents are published here.
+
+| Configuration | Result |
+| --- | --- |
+| DOMAIN and APP_URL | cookthis.app and its HTTPS origin configured |
+| Operator access | Requested verified operator email configured |
+| MiMo | Existing authorized key and model configuration carried over |
+| Supabase URL and anon key | Retrieved from the existing Cookthis production project; anon role and project binding checked |
+| Database connection | Session-pooler host, user and port identified; password unavailable from dashboard, DATABASE_URL remains empty |
+| Turnstile | Created Cookthis production widget for cookthis.app, Managed mode, no pre-clearance; both keys stored privately |
+| Push | Fresh production VAPID pair generated and stored privately |
+| Internal services | Redis container address, proxy mode, worker settings and cost controls configured |
+| Email addresses | Sender and support addresses configured; separate recipes subdomain selected for inbound to preserve existing support mail routing |
+| Resend | No API keys exist. Named full-access key form prepared but not submitted; credential creation awaits operator action |
+| R2 | Account ID and intended cookthis-images bucket name configured; Cloudflare account email verification blocks R2 setup |
+| Stripe | Existing credentials are test-only; not copied into production |
+| Kroger | Existing credentials are certification-only; not copied into production |
+| Deployment | Not started, as requested |
+
+## Values or actions still needed
+
+1. Supabase database password for the existing Cookthis project, or a completed Session pooler connection URI. Dashboard: Connect, Direct connection string, Session pooler, URI. The password is not displayed by Supabase. A forgotten password must be reset by the operator. The URL and anonymous key are already retrieved; the unused service-role key is not requested.
+2. Resend API key: https://resend.com/api-keys, Create API key, Name Cookthis production, Permission Full access, Add. The prepared dialog is left open. Copy the generated key into RESEND_API_KEY in the private production file. Full access supports receiving retrieval as well as outbound email and grants broader account access. Existing keys cannot be retrieved because none exist.
+3. R2: complete Cloudflare account email verification first. Then R2 Object Storage, create cookthis-images if absent, API Tokens Manage, Create API token, Object Read & Write, Apply to specific buckets only, cookthis-images. Required returned fields are Access Key ID and Secret Access Key, not the general Cloudflare API token. Store as R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY. Bucket/account information is already selected. Reference: https://developers.cloudflare.com/r2/get-started/s3/ .
+
+New Resend and R2 access tokens grant persistent account access. Their final creation is left for operator confirmation or the operator's own click under browser permission rules. Turnstile is already configured; no Turnstile values are requested.
+
+After the email key and domain setup are available, configure the Resend receiving webhook and its signing secret, sender verification and Supabase SMTP. No need to request a signing secret before that endpoint exists. Existing support-mail routing must remain intact. Before paid public billing or real grocery carts, live Stripe credentials and prices/webhook and Kroger production credentials are still required; the test/certification keys are not substitutes. Affiliate approval, R2 application integration and monitoring verification remain as recorded below.
+
+## Verification and stopping point
+
+Environment parse and key format checks passed; local/server SHA256 hashes matched; server file ownership is root with mode 0600. The Turnstile dashboard lists the created widget. No new unit/browser/application tests were run. The production file is intentionally incomplete and must not be deployed yet. Stop here per the operator's request, awaiting the missing database and service credentials/actions.
+
+## Historical checkpoints and test tables, preserved verbatim
+
 # Hetzner server preparation checkpoint
 
 Account verification no longer blocks project creation. The cookthis project was created successfully in the operator's logged-in Hetzner account.
