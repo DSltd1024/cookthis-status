@@ -1,3 +1,51 @@
+# Cookthis checkpoint: R2 image storage
+
+13 October 2026. Application commits 34cc80d and ee2e25e (final).
+
+## What works
+
+Recipe thumbnails and creator media-kit PNGs now store in the cookthis-images R2 bucket. Both web and worker receive the existing server-only credentials. No credential values changed or entered Git.
+
+Thumbnails from direct YouTube metadata, Supadata and public social metadata upload alongside the model call. Only a stored Cookthis URL renders in the recipe. A failed image upload leaves the recipe usable with a warning. The additive thumbnail_url database migration preserves thumbnails when recipes are saved and reopened; audio enrichment retains the prior thumbnail if the later image is unavailable.
+
+Creator downloads generate the existing branded PNG in memory, upload it to R2 and redirect to a public download URL. No image files are written to local application storage. Images use content hashes to avoid duplicate objects. Public reads are served through restricted /images/thumbnails and /images/media-kits paths on cookthis.app. The bucket itself need not be public; credentials never reach the browser.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Existing production R2 credentials | Real write and byte-for-byte readback passed in cookthis-images |
+| Initial approved-image upload | 85,205 bytes |
+| Targeted automated suite | 120 passed across 7 files |
+| Scope | Storage, image routes, thumbnail orchestration, source adapter, extraction, enrichment and SSRF protections |
+| Repository TypeScript checks | Passed |
+| Production web and worker builds | Passed |
+| Deployment, migration and runtime checks | infra/update.sh passed twice, final commit ee2e25e; all container health checks passed; migration 0015 present; HTTPS /healthz reports ok |
+| Fresh live recipe thumbnail | Passed: YouTube fixture, draft in 22,768 ms, 4 ingredients, 54,156-byte WebP stored in R2 |
+| Anonymous public read | HTTP 200; initial PNG read byte-identical; both PNG and real video WebP rendered in an unauthenticated browser |
+
+Commands: `pnpm typecheck`; `pnpm build`; `pnpm exec vitest run tests/image-routes.test.ts tests/storage.test.ts tests/thumbnails.test.ts tests/transcript-provider.test.ts tests/pipeline.test.ts tests/stages.test.ts tests/security.test.ts`; production deployment uses `bash infra/update.sh`. `scripts/check-r2.ts` uploads an approved image and verifies byte-identical readback without printing credentials.
+
+Verified public video thumbnail: https://cookthis.app/images/thumbnails/9546d74e81795f7ca68e4da4746ce9a5066f293b79d72e0d9beb47fd812e212e.webp
+
+Production environment contents, permissions and modification time are unchanged. The environment is still ignored and untracked; the server checkout is clean on main at origin/main. Both containers have R2 available, and the final live route passed the dotted-filename download check.
+
+## Security and delivery
+
+Source fetches pin public DNS on every redirect, cap raster images at 5 MB and share an 8-second upload/fetch budget within the extraction deadline. HTML and SVG are rejected. The public reader only permits exact content-hash image paths, returns nosniff and a restrictive content security policy, and caches for one day. No general bucket browser or public upload endpoint was added. R2 egress remains free; uncached reads still use the VPS and R2 operations.
+
+## Initial diagnostic failures, resolved
+
+The first command-line storage probe used Docker's raw environment-file parser, which retained quoted values. Re-running with Node's environment-file parser, matching the deployed Compose values, passed. Initial unit mocks resolved the wrong workspace package path; corrected mocks passed. These were probe/test setup issues, not credential replacements.
+
+## Limits and next step
+
+Production currently has no verified, claimed creator. The creator route rendered a real PNG with production fonts and its upload/redirect behavior passed automated tests; a real claimed-creator download has not been independently exercised. No fake creator was created. Existing saved recipes without thumbnail metadata are not retroactively re-extracted, and older cached drafts may retain external thumbnail URLs until cache expiry. Caption-only recipes have no invented image. Creator removal requires removing associated objects and purging cached image URLs as documented in DEPLOY.md.
+
+Next: extract a fresh video to see its stored thumbnail, or download a media kit after a real creator claim. Earlier limitations and results remain below.
+
+## Historical checkpoints
+
 # Cookthis checkpoint: AKA sticker style across the site
 
 13 October 2026. Application commit f332acc.
