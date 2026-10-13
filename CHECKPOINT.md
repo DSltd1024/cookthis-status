@@ -1,3 +1,40 @@
+# Cookthis checkpoint: AKA platform stickers and playful arrows
+
+13 October 2026. Application commit b5a8575.
+
+## Changes
+
+At the operator's request, the Instagram, TikTok, YouTube and Facebook glyphs now use AKA blue on irregular peach, mint and pale-blue stickers. Recognizable silhouettes remain. The source asset notes identify these as Cookthis presentation adaptations rather than official platform colorways.
+
+Removed platform-name text and link/caption text below each logo. Accessible image names remain. Replaced the rigid source connectors with loose sweeping arrows, a loop and small accent strokes. The arrows after the form also curve, and the recipe/grocery/dinner symbols use the same tilted sticker treatment. Facebook's required-caption explanation stays in the form.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Production web build/type validation | Passed |
+| macOS phone/tablet light/dark browser checks | 12 passed |
+| Linux phone/tablet light/dark browser checks | 12 passed |
+| Logo accessibility | Four named images visible and loaded |
+| Per-logo captions | Removed |
+| Caption fallback and Facebook requirement | Passed |
+| Servings preview | Passed |
+| Horizontal overflow | None in tested browser profiles |
+| Visuals | Phone reviewed; all eight home baselines refreshed |
+| Diff whitespace | Passed |
+
+Commands: `pnpm --filter @cookthis/web build`; `E2E_EXTERNAL=1 E2E_BASE_URL=http://localhost:3205 pnpm exec playwright test tests/e2e/recipes.spec.ts -g 'home is usable|social links offer|Facebook asks'`. Linux used Playwright v1.64.0 Noble. Tablet baselines were explicitly refreshed because the normal whole-page difference threshold tolerated the small localized change. No application failure occurred.
+
+## Deployment
+
+Deployed b5a8575 through infra/update.sh, exit status 0. All container health checks passed. HTTPS /healthz returns status ok and modelConfigured true. A fresh live mobile browser confirmed four accessible platform logos, AKA blue in every served glyph file, no per-logo captions and the new arrow artwork. Production .env contents, permissions and modification time are unchanged. Git checkout is clean.
+
+## Scope
+
+Visual presentation only. No extraction, grocery or billing behavior changed. No live extraction or purchase performed. Direct Facebook videos remain unsupported; recipe caption text is required. Prior limitations are preserved below.
+
+## Historical checkpoints
+
 # Cookthis checkpoint: from your feed to dinner
 
 13 October 2026. Application commit 800ec21.
