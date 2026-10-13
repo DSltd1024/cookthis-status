@@ -1,55 +1,53 @@
 # For Claude
 
-Status: Sentry is deployed for production web and worker with release tracking; one production test error is confirmed in Sentry; checkpoint format and history separation are implemented.
-Blocked on: Approval to add and verify the requested alert address as a secondary Sentry account email; delivery to david@aka-food.com is not yet verified.
-Proposed next: After approval, verify the secondary email, select it for Cookthis project notifications, and confirm a test alert reaches that inbox.
+Status: All four failing browser checks are repaired; GitHub engineering passes with 323 unit tests and 86 browser checks.
+Blocked on: Live acceptance has no GitHub MODEL_API_KEY secret and 0/20 fully reviewed fixture references; production Sentry alert email verification also remains pending from the previous task.
+Proposed next: Complete independent fixture review and explicitly provision CI model access, then rerun live accuracy and cost acceptance; finish Sentry email routing after the pending approval.
 
-# Cookthis checkpoint: production Sentry and checkpoint format
+# Cookthis checkpoint: GitHub workflow failures
 
 Live site: https://cookthis.app
-Application commit deployed: 70de133f129490b6b19bdc9bcae4f61f72f41039.
+Fix commit: fafaf14de73b32acde06dd991cf8b9909d78a963.
+GitHub run: https://github.com/DSltd1024/cookthis/actions/runs/38448572736
 
-## What works
+## Diagnosis and repair
 
-- Web browser, web server and background worker now use Sentry with production environment and release labels derived from the deployed Git commit.
-- The web and worker run release `cookthis@70de133f129490b6b19bdc9bcae4f61f72f41039`.
-- Unexpected API errors, React errors and worker failures are reported. Expected user-facing HTTP errors are excluded.
-- Monitoring strips request, user, breadcrumb and extra payloads and scrubs common credentials, email addresses and URLs. Session replay and performance sampling are disabled.
-- One authenticated, operator-only production test error was triggered. Sentry received it as COOKTHIS-1 with one event, production environment, service web-server and the matching release.
-- Sentry issue: https://dsct.sentry.io/issues/153435906/?project=4512250308329552
-- Event ID: b55f791a6fb245228640ff7bbc5f9a8f.
-- The Cookthis alert rule includes new issues and high-priority issues. It currently targets the existing Sentry member. The requested destination is not yet an available verified notification address.
-- Every future checkpoint starts with For Claude, Status, Blocked on and Proposed next. New files contain only their current checkpoint. The publisher moves the previous report into HISTORY.md and keeps CHECKPOINT.md identical to the latest timestamped file. Existing archives are retained.
+The previous engineering run passed 82 browser checks, skipped 42 project-specific duplicate checks, and failed four. The causes were:
 
-## Validation
+| Failure | Cause | Repair |
+|---|---|---|
+| Household paste and save flow | Homepage redesign introduced two matching recipe headings before extraction navigation | Assert the recipe's level-one heading, preserving the actual extraction and save checks |
+| Anonymous paste through queue and worker | Same ambiguous homepage heading | Scope to the extracted recipe's level-one heading |
+| Social caption fallback error | Installed service worker bypassed the browser test's mocked API response | Block service workers in this recipe test file so the mock deterministically exercises the error UI |
+| Creator portrait media kit | CI had no image storage configured after production switched to R2 | Run isolated S3-compatible test storage with disposable files and test credentials; exercise actual SDK upload and public image read |
+
+Live acceptance was separately failing because GitHub has no configured model secret and the fixture file marks its references as partially reviewed, not full ground truth. These are real acceptance blockers. A new prerequisite step reports them immediately before installing media tools or consuming paid API credits. The gate remains failing; it was not disabled, skipped, or changed to report a false pass.
+
+## Verification
 
 | Check | Result |
 |---|---|
-| Unit suite | 323 tests passed across 35 files |
-| Focused monitoring/privacy and source-process checks | 2 tests passed |
-| TypeScript checks | Passed |
-| Web and worker build | Passed |
-| Real email sign-in browser regression | Passed, one test |
-| Production deploy through infra/update.sh | Completed |
-| Public /healthz | Healthy |
-| Worker health | Healthy, monitoring configured, matching release |
-| Production test error | Received in Sentry, one event |
-| Release attached to received event | Confirmed in Sentry UI |
-| Alert received at david@aka-food.com | Not yet verified, blocked on secondary-email approval |
+| Local targeted browser suite | 14 passed, including all four original failures |
+| Local storage unit tests | 7 passed |
+| Local type checks | Passed |
+| Local production build | Passed |
+| GitHub engineering rerun | Passed: 323 unit tests, 86 browser checks, 42 existing project-specific skips; all build, database and worker checks passed |
+| GitHub live acceptance | Failed early with explicit missing-secret and incomplete-reference annotations |
+| Production health endpoint | HTTP success, status ok, model configured |
 
-## Remaining limitation and precise blocker
+## Accelerated conductor results from GitHub
 
-Sentry currently exposes only the existing account address for project email routing. Adding the requested address attaches it to the account, so the browser security policy requires confirmation at the time of this account-access change. A confirmation question has been presented. No new account email or member access has been added. No claim is made that the requested inbox received an alert.
+| Scenario | Steps completed | Finish spread | Maximum difference from revised serve time | Serve time shift | Read p50 / p95 | Oven conflicts |
+|---|---:|---:|---:|---:|---|---:|
+| On time, 60x | 7 | 0.544 min | 0.544 min | 1.203 min | 63 / 103 ms | 0 |
+| Injected 12-minute delay, 60x | 7 | 0.529 min | 0.529 min | 13.201 min | 61 / 97 ms | 0 |
 
-Source map upload is disabled because no upload credential is configured. Release tracking is active, but bundled stack traces can remain minified. The single live error was generated by the web server; worker configuration and health were verified without generating a second test error. Browser and worker event delivery were not separately injected in this run.
+Both conductor assertions passed. The on-time read p95 was 103 ms on this shared CI runner, slightly above the 100 ms product target; this result is not a production latency benchmark.
 
-Two preliminary live sign-in test attempts stopped before triggering an error: the first waited too briefly for the email request, and the second hit the email resend interval. The already-delivered email was then used successfully to sign in and send the single monitoring error.
+## Deployment and limitations
 
-## How to verify and continue
+The application source and CI fix are pushed to the private repository. Production was not redeployed for this test-environment repair and remains on the prior Sentry-enabled release. No credentials were copied to GitHub or public status files. R2_ENDPOINT is an operator-controlled override used only by isolated tests; production continues using its standard R2 endpoint.
 
-- Run `pnpm test`, `pnpm typecheck` and `pnpm build` from the private application checkout.
-- Visit https://cookthis.app/healthz and the linked Sentry issue to inspect the production event and release.
-- Finish verification of the requested alert email after approval, then use the saved rule's notification test to verify inbox delivery without manufacturing another application failure.
-- Rollback if needed: on the server run `git checkout ff56e0a88fee28a3bbb4a1cfce343fe7119e1c11 && bash infra/deploy.sh`.
+A fully green workflow cannot be claimed until live extraction acceptance is independently established. The screenshot's failed workflow notification is not evidence of a production outage. The live health check passed during this investigation.
 
-No credentials, source code, environment files, raw logs or household data are included in this public checkpoint.
+To rerun the repaired cases locally: `pnpm exec playwright test tests/e2e/creators.spec.ts tests/e2e/household.spec.ts tests/e2e/recipes.spec.ts --project phone-light`, after the documented local database and test Redis setup and `pnpm build`.
