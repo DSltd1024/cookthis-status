@@ -1,3 +1,59 @@
+# Cookthis checkpoint: Premium discoverability
+
+13 October 2026. Source commit b94c992 (UI change beacbf5).
+
+## What changed
+
+Your kitchen now has separate Account and Premium entries. Premium links directly to the visibly labelled Household Premium panel at https://cookthis.app/account#premium. Unpaid households can choose the monthly or yearly subscription without creating a meal or starting a trial first. The optional purchase does not change the existing card-free 14-day trial trigger on saving a second dish.
+
+The production browser reproduced the reported problem: an existing saved three-dish meal showed the Premium feature panel, but no payment button. That household had no trial start recorded, and the old UI required a trial start before rendering the button. This condition has been removed.
+
+A second live issue was found by pressing Choose Premium: Stripe rejected the product because it had no tax category, required by this account's existing Managed Payments default. The product now uses txcd_10103000, SaaS for personal use. The account default was preserved. [Stripe category reference](https://docs.stripe.com/payments/managed-payments/eligibility#product-tax-code-requirements).
+
+Stripe replayed the original rejection for the existing idempotency key even after the product fix. Checkout request identity now includes the selected price, preserving duplicate protection and allowing a fresh request. One standalone diagnostic live Checkout session was created and immediately expired, and the household checkout was successfully created and saved by the application billing function. No payment was submitted.
+
+## Checks
+
+| Check | Result |
+| --- | --- |
+| Running production web key | Live restricted Stripe key; exact equality to private production environment confirmed without printing values |
+| Running monthly/yearly prices and webhook secret | Exact equality to production environment confirmed |
+| Live monthly and yearly prices | Active, USD 4.99/month and USD 39/year before tax |
+| Stripe account | Live charges and payouts enabled; card payments active, superseding the historical disabled state below |
+| Stripe Tax | Active |
+| Webhook | Live, enabled, all six billing events configured |
+| Local browser regression | Passed: Premium link before trial, second-dish trial, persisted panel after refresh, expired trial leaves shopping usable |
+| Billing webhook unit tests | 6 passed |
+| Web TypeScript and build | Passed locally; final production image built and deployed successfully |
+| Production health after final deploy | Web healthy; public HTTPS /healthz returned status ok, modelConfigured true |
+| Production saved three-dish meal | Household Premium panel and Choose Premium visible after reload |
+| Production Your kitchen and Account | Premium link and payment controls visible in the signed-in household |
+| Live browser Checkout | Choose Premium opened Stripe, showing Subscribe to Cookthis Premium, monthly amount and local/USD currency options |
+| Live payment | Not submitted; no new subscription or charge |
+
+## Exact taps
+
+1. Open https://cookthis.app and tap Your kitchen.
+2. Tap Premium. Alternatively tap Account and use the Household Premium panel near the top.
+3. Choose Monthly or Yearly in Premium payment interval.
+4. Tap Choose Premium to open Stripe Checkout. Review the currency and tax total there before paying.
+
+Direct entry: https://cookthis.app/account#premium. Payment management requires the household owner. An already-open checkout for one interval must expire before another interval can be opened, as explained by the existing app message.
+
+The live hosted Checkout was opened from the signed-in production browser and left available to the operator. No payment fields were entered or changed, and Subscribe was not pressed. The anonymous diagnostic session was expired immediately; the household session remains open until its normal expiry. Existing household meals and recipes were unchanged.
+
+Rollback image retained: cookthis-web:before-premium-discovery. Application source is committed locally. Only this checkpoint and its timestamped archive are published to the public status repository.
+
+## Known limitations
+
+No live purchase, payment details submission, subscription or refund was performed. The live customer portal still has no active configuration and must be configured before Manage payment can work for paid customers. Historical extraction and other launch limitations remain recorded below.
+
+Verification commands: pnpm --filter @cookthis/web typecheck; pnpm --filter @cookthis/web build; pnpm exec playwright test tests/e2e/premium.spec.ts --project=phone-light; pnpm exec vitest run tests/billing-webhook.test.ts.
+
+## Historical checkpoint and measured results
+
+The following is preserved history. Current results above supersede earlier billing configuration status.
+
 # Cookthis checkpoint: live Stripe configuration
 
 13 October 2026. Source commit 704647a. The supplied live restricted key and publishable key were installed only in the production environment. Cookthis Premium, both live prices and the public live webhook were created through Stripe's API with idempotency keys. Its signing secret was stored only in production. The web application was rebuilt and recreated successfully. No purchase, Checkout session, charge, subscription or refund was created.
