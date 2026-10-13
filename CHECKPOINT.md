@@ -1,3 +1,47 @@
+# Cookthis checkpoint: Supadata activated, hourly monitoring
+
+13 October 2026. The supplied Supadata key was installed only in the production environment file on the server, with file permissions 0600. The worker was recreated. The key was not copied into local environment files, source code or this public repository.
+
+## Live results
+
+| Check | Result | First draft | Background audio | Notes |
+| --- | --- | --- | --- | --- |
+| Production synthetic, Allrecipes peanut butter cookies | Passed | 32.404 seconds | Initial attempt failed at 18.348 seconds | End-to-end check 33.599 seconds, four ingredients, MiMo spend delta $0.00060494 excluding Supadata credits |
+| German pancake Short a1oPd5BgWKk | Draft returned | 56.428 seconds | Not needed | Supadata found native captions, so this does not qualify as the no-caption test; seven ingredients, one validator retry |
+| Spanish pancakes umj66RVAbOM | Draft returned | 28.518 seconds | Not needed | Description and native captions available, six ingredients; also does not qualify as no-caption |
+| No-caption cookie audio retest | Failed, Supadata HTTP 206 | Timed out at 17.285 seconds | Failed at 46.081 seconds | Genuine no-caption source from the earlier collection; fresh run returned no recipe after 64.115 seconds. Caption paste remains available. |
+| Public /healthz | Passed | n/a | n/a | status ok, modelConfigured true |
+| Better Stack heartbeat | Up | n/a | n/a | One-hour expectation saved; five-minute grace retained |
+
+The first successful synthetic run occurred at 2026-10-13T04:18:51.751Z. Its pass checks the first draft and expected ingredient presence, not full extraction accuracy or background audio success. No twenty-video accuracy claim is made from these spot checks. Individual drafts still carry guesses for review.
+
+## Timeout found and fixed
+
+The no-caption cookie fixture produced its first draft from creator text. Its initial background audio request hit the generic 15-second HTTP timeout before Supadata returned. The adapter now allows up to 90 seconds for the audio-generation HTTP request, while retaining the overall 300-second background ceiling. Metadata and first-draft requests retain their existing limits. No login or proxy was added. A first attempt to reuse the original queue seed found that the completed job had already been removed. The audio retest therefore runs the same public cookie video through a fresh extraction and waits for background completion.
+
+Runtime source commit efded8a; final documentation commit 25dc551. Worker deployment: passed; recreated worker healthy; private environment permissions verified as 0600. Targeted adapter, transport, source, stage and security checks: 94 passed across five files. Worker TypeScript check passed. Shell syntax and whitespace checks passed.
+
+The direct provider diagnostic also returned HTTP 206 after 41.722 seconds, error transcript-unavailable, message “Transcript Unavailable”, details “No transcript is available for this video”, with neither content nor an asynchronous job ID. The no-caption audio path therefore remains a failed acceptance check. No further provider retries were made.
+
+## Hourly schedule
+
+The live cron entry and infra/deploy.sh now use `0 * * * *`. This runs at the start of each hour, 24 times per day instead of 96. Better Stack was updated and visibly confirmed “Expected every 1 hour”. The home and health monitors retain their existing intervals. Monitoring still reports actual failures; no fake success heartbeat was sent.
+
+This reduces scheduled extraction volume by 75 percent. Provider credits remain separate from MiMo token spend. The current cookie fixture has no native captions, so its background generation costs are additional to the caption-only monthly baseline in earlier documentation. No subscription upgrade or automatic recharge was enabled.
+
+## Reproduce
+
+- Server: `cd /opt/cookthis && bash infra/synthetic.sh`.
+- Verify schedule: `cat /etc/cron.d/cookthis-synthetic`.
+- Local: `pnpm exec vitest run tests/transcript-transport.test.ts tests/transcript-provider.test.ts tests/transcript-source.test.ts tests/security.test.ts tests/stages.test.ts`.
+- Local: `pnpm --filter @cookthis/worker typecheck` and `bash -n infra/deploy.sh infra/synthetic.sh`.
+
+## Known limitations
+
+The 25-second draft target was missed by these runs, although all three returned drafts within the 60-second ceiling. Supadata is now authenticated, but its availability and quota remain external dependencies. Caption paste is retained. Historical phase, grocery, billing and launch limitations below remain unless explicitly superseded here.
+
+## Historical checkpoint, preserved verbatim
+
 # Cookthis checkpoint: YouTube transcript fallback
 
 Source commit: 5112c7e. Direct public YouTube fetching is still first. A new TranscriptProvider interface now supports Supadata after eligible direct-source failures, including the production server's sign-in challenge. No YouTube login, cookies or proxy configuration was added. Caption paste remains available.
