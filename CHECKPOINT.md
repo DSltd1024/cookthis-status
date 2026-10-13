@@ -1,3 +1,46 @@
+# Cookthis checkpoint: clearer navigation, appearance choice and display-only Kroger logo
+
+13 October 2026. Application source commit c787054.
+
+## What changed
+
+Your kitchen is now a clearly labelled, larger button beside the Cookthis logo on larger screens. On phones it has its own full-width second header row, with at least a 48-pixel touch target. It no longer sits as a tiny uppercase label at the far edge.
+
+The header now offers System, Light and Dark appearance choices. The selection is saved on the current device, applied before the page paints and retained across navigation and reloads. System follows the device preference. No account is required, and blocked local storage does not prevent changing the current tab's appearance.
+
+The Kroger logo is display-only. It has no link, click action or keyboard stop. Try a recipe remains a separate link below the shopping explanation.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Local optimized web build and type validation | Passed |
+| macOS browser checks | 36 passed |
+| Linux browser checks | 36 passed |
+| Appearance persistence | Light and Dark retained after reload and navigation |
+| System override | Explicit Light overrides a dark device; System follows subsequent device changes |
+| Kitchen navigation | Correct /meals destination; touch target at least 48 pixels |
+| Kroger logo | Image remains visible; wrapper is a non-interactive div with no link |
+| Visual baselines | Refreshed for affected home, recipe, meal, shop, plan, cook, second-screen and install surfaces, phone/tablet and light/dark, on macOS and Linux |
+| Live browser verification | Larger kitchen button, Dark retained after reload, Light rendered correctly, Kroger logo non-clickable; preference restored to System after checking |
+| Production deployment | Completed; web, worker, Caddy, Redis and backup healthy |
+| Public HTTPS health | /healthz returned status ok, modelConfigured true |
+| Source commit | c787054 |
+
+## How to use it
+
+Open https://cookthis.app. Use Your kitchen beside the logo, or the wide button beneath the logo on a phone. Choose Light, Dark or System from the appearance menu in the header. The change is remembered on that browser.
+
+## Scope and limitations
+
+This is a navigation and appearance update. Production credentials and grocery/billing configuration were not changed. The existing grocery OAuth/cart acceptance and customer billing-portal limitations remain recorded below. The Kroger logo is no longer a link, superseding the prior checkpoint's link description.
+
+Rollback image: cookthis-web:before-header-theme. Verification used the Next.js production build and Playwright's home, recipe, meal, shopping, conductor, helper/second-screen, launch and appearance cases. No purchases or cart mutations were made.
+
+## Historical checkpoints and measured results
+
+The following is preserved history. Current navigation, appearance and logo behavior above supersede earlier descriptions.
+
 # Cookthis checkpoint: Kroger production and home-page partner logo
 
 13 October 2026. Application source commit aa3e157.
