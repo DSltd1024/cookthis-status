@@ -1,3 +1,55 @@
+# Cookthis checkpoint: live Stripe configuration
+
+13 October 2026. Source commit 704647a. The supplied live restricted key and publishable key were installed only in the production environment. Cookthis Premium, both live prices and the public live webhook were created through Stripe's API with idempotency keys. Its signing secret was stored only in production. The web application was rebuilt and recreated successfully. No purchase, Checkout session, charge, subscription or refund was created.
+
+## Configuration verified through Stripe's API
+
+| Setting | Result |
+| --- | --- |
+| Product | Cookthis Premium, live |
+| Monthly price | USD 4.99 per month, active, tax exclusive |
+| Yearly price | USD 39 per year, active, tax exclusive |
+| Webhook URL | https://cookthis.app/api/billing/webhook |
+| Webhook mode and status | Live, enabled |
+| Webhook API version | 2026-09-30.endive, matching the installed Stripe SDK |
+| Webhook events | Exactly the six listed below |
+| Signing secret | Saved in private production environment only |
+| Environment file permissions | 0600 |
+| Stripe Tax | Active, no pending configuration fields returned |
+| Stripe live charges | Disabled; card payments inactive |
+| Account details | Submitted; API returned no currently-due fields or disabled reason |
+| Live customer portal | No active configuration returned; Manage payment is not ready |
+
+The six enabled events are checkout.session.completed, customer.subscription.created, customer.subscription.updated, customer.subscription.deleted, invoice.paid and charge.refunded.
+
+## Fix and verification
+
+The existing webhook guard recognised sk_live keys only. It now recognises rk_live restricted keys as well, while retaining raw-body signature verification and rejecting test-mode events in live configuration.
+
+| Check | Result |
+| --- | --- |
+| Signed webhook unit tests | Six passed, including restricted-key live acceptance and wrong-mode rejection |
+| Web application TypeScript | Passed |
+| Production image build and recreation | Passed |
+| Web and worker containers | Healthy |
+| Public HTTPS /healthz | status ok, modelConfigured true |
+| Public webhook, unsigned request | HTTP 400, Webhook signature required |
+| Public webhook, signed test-mode request | HTTP 400, Wrong payment mode |
+| Public webhook, signed live configuration probe | HTTP 200, received true |
+| Live purchase/refund acceptance | Not performed, explicitly prohibited by the operator |
+
+The configuration probe was an explicitly synthetic, non-financial event signed with the configured production secret. It records a diagnostic billing-event receipt only and contains no customer, invoice, payment or subscription. It does not prove delivery of an actual Stripe purchase event or live payment processing. Initial probes using Python's default user agent were rejected by Cloudflare with HTTP 403/1010; the documented results above use an identifying Cookthis deployment user agent. No WAF protections were changed.
+
+Commands used for validation: `pnpm exec vitest run tests/billing-webhook.test.ts`, `pnpm --filter @cookthis/web typecheck`, `git diff --check`, and production `docker compose --env-file .env -f infra/docker-compose.yml build web` followed by `docker compose --env-file .env -f infra/docker-compose.yml up -d --no-deps --wait web`.
+
+## Remaining before accepting live payments
+
+Stripe reports charges_enabled=false and inactive card payments, despite submitted account details. Review payment activation in the Cookthis Stripe Dashboard; the API did not provide a specific missing field or reason, so no cause is assumed. Live Tax is already active. The live customer portal still needs configuration for payment-method management, invoice history and cancellation at period end. Neither account capabilities nor portal configuration was changed by this product/prices/webhook setup.
+
+The requested live configuration and redeploy are complete. No claim is made that customers can pay while Stripe payment capabilities remain inactive. Test-mode purchase and refund results in earlier checkpoints remain test-mode evidence only. Other extraction, grocery and launch limitations are preserved below.
+
+## Historical checkpoint, preserved verbatim
+
 # Cookthis checkpoint: Supadata activated, hourly monitoring
 
 13 October 2026. The supplied Supadata key was installed only in the production environment file on the server, with file permissions 0600. The worker was recreated. The key was not copied into local environment files, source code or this public repository.
