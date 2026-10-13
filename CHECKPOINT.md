@@ -1,3 +1,27 @@
+# Cookthis checkpoint: Impact site verification
+
+13 October 2026. Source commit 1174e20.
+
+## Change
+
+Added the operator-supplied impact-site-verification meta tag to the shared document head, including the home page. The tag uses the requested value attribute, not a substituted content attribute. The verification identifier is public page metadata, not an API credential. Production credentials were not changed.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Web TypeScript | Passed |
+| Diff whitespace check | Passed |
+| Production build and deployment | Completed; Compose health wait succeeded |
+| Live home-page head | Exactly one impact-site-verification tag, exact supplied value verified by HTML parser inside head |
+| Public HTTPS health | /healthz returned status ok, modelConfigured true |
+
+No design or shopping/billing behavior was changed. Impact's own verification action was not submitted; the operator can now retry verification after the live tag check below is confirmed.
+
+Rollback image: cookthis-web:before-impact-verification.
+
+## Historical checkpoints and measured results
+
 # Cookthis checkpoint: clearer navigation, appearance choice and display-only Kroger logo
 
 13 October 2026. Application source commit c787054.
