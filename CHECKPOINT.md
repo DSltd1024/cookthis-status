@@ -1,3 +1,46 @@
+# Cookthis checkpoint: private source repository and Git-based production updates
+
+13 October 2026. Source commit 00c3081.
+
+## Completed
+
+Created the private application repository https://github.com/DSltd1024/cookthis under the operator's GitHub account. Pushed all reachable history, branches and tags. The initial history had 85 commits; the deployment documentation adds one, for 86 commits on main. The local origin remote points to this private repository, with main tracking origin/main.
+
+Generated the production deploy key on the server and registered only its public key with GitHub, with read_only=true. The private key remains on the server. Repository-scoped SSH configuration selects this key and enforces host-key checking against GitHub host keys obtained from GitHub's authenticated metadata API.
+
+Converted /opt/cookthis to a Git checkout in place, without copying a developer environment file or removing production files. Initial comparison found only the previously undeployed billing documentation; that file was synchronized. The production .env remains ignored and is not tracked.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Repository visibility | PRIVATE, confirmed through GitHub API |
+| Full-history secret scan | Gitleaks scanned all original 85 commits, zero findings |
+| Configured-secret scan | 1,159 historical blobs checked against configured local secrets, zero matches |
+| Deploy key | Read-only, confirmed through GitHub API; private key stays on server |
+| SSH host verification | Pinned GitHub host keys; strict checking enabled |
+| Production checkout | main tracking origin/main |
+| Real update-script pull | Fast-forwarded from 2dfa94e to 00c3081 through the deploy key |
+| Actual redeploy | infra/update.sh exited 0 after build, migrations and service recreation |
+| Container health | Web, worker, Redis, Caddy and backup all healthy |
+| Public HTTPS health | https://cookthis.app/healthz returned status ok and modelConfigured true |
+| Production environment integrity | File bytes, permissions and modification time unchanged from before conversion |
+| Final server checkout | Clean, 86 commits, main at 00c3081 tracking origin/main |
+
+GitHub Actions started automatically on the new repository. Both runs were still in progress at this checkpoint; this report does not claim CI completion. No new repository API secrets were provisioned. Production deployment and health verification above completed independently.
+
+## Routine update
+
+Commit and push application changes to the private repository's main branch. On the production server run: cd /opt/cookthis && bash infra/update.sh. The script requires a clean tracked checkout, pulls with fast-forward only, builds, runs migrations and recreates services with health checks. It prints the previous commit and rollback command.
+
+The public cookthis-status repository remains checkpoint-only. It does not contain application source, environment files, deploy private keys or raw deployment logs.
+
+## Known limitations and scope
+
+This configures source access and deployment, not new billing, grocery or extraction behavior. Earlier live customer-portal acceptance and grocery shopper OAuth acceptance prerequisites remain recorded below. No purchases or grocery cart changes were performed.
+
+## Historical checkpoints and measured results
+
 # Cookthis checkpoint: live Stripe customer portal configured
 
 13 October 2026. Documentation commit 2dfa94e. Configuration was changed directly in the Cookthis live Stripe account. No app deployment or credential change was needed; the existing portal endpoint uses Stripe's default portal configuration.
