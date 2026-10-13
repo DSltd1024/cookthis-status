@@ -1,3 +1,45 @@
+# Cookthis checkpoint: compact appearance control and more food artwork
+
+13 October 2026. Application commit d9a950b.
+
+## Changes
+
+The header appearance picker is now a compact 104 px outlined pill with a small mode symbol. The large visible Appearance label is removed; the accessible name and Light, Dark and System choices remain. Its visible pill is 34 px tall while the interactive target remains 48 px high.
+
+Original AKA food illustrations now accompany Your kitchen, meals, shopping, Account, sign-in and creator headings. A small group of food stickers appears in the site footer. The new mixer WebP is 9,816 bytes, resized from original AKA artwork without changing its drawing. The existing corn, bowl and croissant assets are reused. Decorative art has empty alternative text and is hidden from assistive technology. Recipe photos still come only from their original videos; the decorative art is not presented as a photo of a dish. No business or provider behavior changed.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Production web build | Passed |
+| Test TypeScript | Passed |
+| macOS browser checks, no baseline updates | 40 passed |
+| Linux browser checks, no baseline updates | 40 passed |
+| Visual baselines | 104 affected screenshots refreshed, then verified |
+| Layout coverage | Phone and tablet, light and dark, across the existing 14-screen suite |
+| Appearance | Width at most 106 px, 48 px touch height, choices persist across navigation and reload |
+| Images | New heading artwork loads; no horizontal overflow on checked screens |
+| Manual visual review | Mobile sign-in and tablet meal checked |
+| Formatting and diff whitespace | Passed |
+| Production deploy and live checks | infra/update.sh exited 0 at d9a950b; all health checks passed; HTTPS /healthz is ok |
+
+Commands: `pnpm --filter @cookthis/web build`; `pnpm exec tsc --noEmit -p tsconfig.tests.json`; `E2E_EXTERNAL=1 E2E_BASE_URL=http://localhost:3212 pnpm exec playwright test -g 'home is usable|original recipe shows|meal layout|shopping layout|plan and cook screens|helper and second screen|launch pages make|phone sharing opens|share the sticker system|appearance overrides'`. Linux ran the same browser selection in Playwright v1.64.0 Noble. Deployment uses `bash infra/update.sh`.
+
+Live mobile browser verification passed: appearance width 104 px, touch height 48 px, dark choice survives reload, heading/footer artwork loads, mixer asset returns HTTP 200 and no horizontal overflow. Production environment contents, permissions and modification time remain unchanged. Server checkout is clean at origin/main.
+
+## Brand sources and limits
+
+Used the original core AKA food artwork, Outfit, blue outlines and pastel sticker treatment already approved for Cookthis. The local library was verified on 28 September 2026. An initial connector lookup used an unsupported argument; corrected metadata searches found the known BrandBook folder and no newer matching brand guide after that date. The original archive was not returned by the current search, so this is a limited freshness check, not proof of a complete brand-library audit.
+
+Initial local image conversion paths were corrected to the installed package entry point. Overlapping early builds failed; the completed sequential build and subsequent browser checks passed. Authenticated screenshots use controlled local fixtures. No live purchase, grocery order, extraction or email was sent for this design change.
+
+## Next
+
+Refresh cookthis.app to see the compact theme switch and the added food artwork. Earlier operational results and limitations remain below.
+
+## Historical checkpoints
+
 # Cookthis checkpoint: R2 image storage
 
 13 October 2026. Application commits 34cc80d and ee2e25e (final).
