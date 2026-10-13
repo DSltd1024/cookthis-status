@@ -1,3 +1,48 @@
+# Cookthis checkpoint: Kroger production and home-page partner logo
+
+13 October 2026. Application source commit aa3e157.
+
+## Completed
+
+The supplied Kroger production client credentials were written only to the private production environment file, with permissions 0600. KROGER_ENVIRONMENT is production. The callback is https://cookthis.app/api/grocery/kroger/callback. Both web and worker were recreated to load the settings. Local development environment files were not changed, and credentials were not committed.
+
+The home page now displays the Kroger logo below the paste introduction, labelled Grocery partner · US. It says to choose Kroger when shopping a recipe and explains that prices and checkout are Kroger's. The logo links to Kroger; Try a recipe opens a Cookthis test recipe so a visitor can try shopping without first creating a meal. The logo is self-hosted and source attribution is recorded in BRAND.md.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Web Kroger environment | Production; credential and callback values match the private production file |
+| Worker Kroger environment | Production; credential and callback values match the private production file |
+| Production API authentication | Passed, product.compact client-credentials token received, 1,800-second expiry |
+| Nearby stores | Passed, 3 stores returned for public test postal code 45202 |
+| Product search | Passed, 3 apple products returned at the selected test store |
+| Live home page | Verified in a real browser: logo, US partner label, checkout copy and recipe link visible |
+| Production deployment | Web image rebuilt; both services recreated with production Kroger configuration |
+| Container health after final deployment | Web and worker healthy |
+| Public HTTPS health | /healthz returned status ok, modelConfigured true |
+| Local web TypeScript | Passed |
+| Local production build | Passed |
+| macOS home browser checks and visual baselines | 4 passed: phone/tablet, light/dark |
+| Linux home browser checks and visual baselines | 4 passed: phone/tablet, light/dark |
+| Credential disclosure | No credentials printed, committed or copied into this status repository |
+
+## How to use it
+
+Open https://cookthis.app. The Kroger partner section is directly below the opening recipe input. Choose Try a recipe, review the recipe, then Shop. Select Kroger, choose a store and sign in to Kroger when asked. Checkout and prices belong to Kroger.
+
+## Limits and next check
+
+This verifies production authentication, locations and products. It does not prove an end-to-end shopper OAuth/cart addition. A shopper must authorize the new production Kroger connection before adding items to their cart; certification connections are separate. No grocery purchase or cart mutation was made during this task. Earlier Stripe customer-portal and extraction limitations remain in the historical record below.
+
+Rollback image for the home-page change: cookthis-web:before-kroger-home. A code rollback must preserve the current private production environment. The source repository is committed locally; only checkpoint Markdown is pushed to the public status repository.
+
+Tests: pnpm --filter @cookthis/web typecheck; pnpm --filter @cookthis/web build; pnpm exec playwright test tests/e2e/recipes.spec.ts -g 'home is usable' --update-snapshots; the same four home tests ran in the Playwright Linux container against the local built web app.
+
+## Historical checkpoints and measured results
+
+The following is preserved history. Current Kroger production results above supersede earlier certification settings.
+
 # Cookthis checkpoint: Premium discoverability
 
 13 October 2026. Source commit b94c992 (UI change beacbf5).
