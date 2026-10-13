@@ -1,3 +1,58 @@
+# Cookthis checkpoint: email sign-in loop fixed
+
+Date: 2026-10-13 UTC
+Production: https://cookthis.app/
+Application commit: ff56e0a, pushed and deployed with infra/update.sh.
+
+## Report, diagnosis and repair
+
+The operator reported that opening the emailed sign-in link returned to sign-in repeatedly. Their browser showed an otp_expired error. A controlled reproduction with a fresh real local Supabase email confirmed that opening the old link in a different browser failed: the PKCE callback required the originating browser's verifier cookie. The precise reason each previously issued production link became invalid is not established; email scanners can also consume direct one-use links, but no claim is made that a scanner caused this particular incident.
+
+Both hosted Supabase email templates, Confirm sign up and Magic link or OTP, now use the committed supabase/templates/sign-in.html. Emails open a Cookthis confirmation page. Merely visiting the page does not verify or consume the token. Tapping Sign in to Cookthis sends the token hash to Supabase for a single-use verification, independently of the original browser's cookies. OAuth keeps its existing PKCE callback. The token is placed in a URL fragment, removed from the address bar on load, and never logged. Verification remains same-origin and rate-limited. The page is noindex and uses no-referrer.
+
+Already-authenticated visitors to sign-in return to their kitchen. A genuinely expired or used token produces a clear message on the confirmation page rather than automatically sending the user around the request loop. Unsaved drafts still remain on their original device.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Old flow, fresh email opened in second browser | Reproduced sign-in error |
+| Real local email, separate browser, new confirmation | Passed |
+| Scanner-style browser visit without button click | No verification call; token remained usable |
+| Authenticated kitchen API after sign-in | HTTP 200 |
+| Session after refresh | Passed |
+| Used token in another fresh browser | Clear error, stays on confirmation page |
+| Cross-origin verification request | Rejected with HTTP 403 |
+| Meal-save regression including edits during save, refresh and reopening | Passed |
+| Final focused browser suite | 2 passed, 7.3 seconds |
+| Type checks | Passed |
+| Web and worker builds | Passed |
+| Production deployment | Completed successfully |
+| Production checkout | ff56e0a, clean |
+| Both production email templates | Saved, persisted after dashboard reload |
+| Real newly delivered production email | New confirmation template verified |
+| Production sign-in opened in another browser | Passed |
+| Production authenticated kitchen, before and after refresh | HTTP 200 both times |
+| Public health endpoint | status ok, modelConfigured true |
+
+No recipe, meal, payment or grocery order was changed by the production authentication check. Test sign-in emails were requested for the reported sign-in recipient. The final test consumed its one-use email link, so the operator should request their own fresh link now.
+
+## Intermediate failures and limits
+
+The first local reproduction attempt used a preview port whose configured origin differed, so its request was correctly rejected. Repeating against the configured local origin reproduced the actual cross-browser failure. Type checking initially encountered stale generated Next route types after changing a route handler to a page; the build regenerated them and the final check passed. The first browser assertion matched both the visible error and Next's route announcer; its selector was corrected. The extra meal-save regression initially encountered an outdated local database schema. Local migrations were applied and both tests passed.
+
+The first production test email after saving the templates still used the prior template. The dashboard settings persisted after reload. An immediate subsequent request was rejected during the resend interval; a later fresh request delivered the new template and completed the real cross-browser verification. No email rate limits were weakened.
+
+Old emails retain their old links. Request a new link at https://cookthis.app/sign-in, open the newest email, then tap Sign in to Cookthis. No new credentials or operator configuration are required. The broader extraction, billing and grocery suites were not rerun for this authentication fix.
+
+Reference for the supported token-hash and scanner-safe email patterns: https://supabase.com/docs/guides/auth/auth-email-templates
+
+---
+
+# Historical checkpoints
+
+The following earlier results are retained as historical context, not newly rerun checks.
+
 # Cookthis checkpoint: Amazon Fresh live US option
 
 Date: 2026-10-13 UTC
