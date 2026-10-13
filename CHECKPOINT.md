@@ -1,3 +1,42 @@
+# Cookthis checkpoint: food, color and a little play
+
+13 October 2026. Application commit cb25763.
+
+## What changed
+
+Added three original AKA illustrations to the home-page opening: a bowl, corn and a croissant, arranged as colorful kitchen stickers. Hovering gives a small tilt. These are decorative brand illustrations, not photographs of the example recipes.
+
+The servings preview now sets the table with one illustrated plate per guest. Switching between two, four and six people updates the plates, recipe amounts and a short caption. New plates have a brief entrance animation. Reduced-motion preferences disable motion. The existing paste flow, caption fallback, light/dark choice and non-clickable Kroger logo remain.
+
+Images are self-hosted WebP files totaling approximately 54 KB. Original artwork proportions and colors are retained; no external image service or tracking was added. This continues the AKA core direction verified during the immediately preceding redesign.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Production web build and type validation | Passed |
+| macOS phone/tablet, light/dark browser suite | 8 passed |
+| Linux phone/tablet, light/dark browser suite | 8 passed |
+| Visual baselines | Eight home snapshots updated and rechecked |
+| Image loading | All three artwork images have nonzero natural width |
+| Six-person preview | Six plates, 1,200 g potatoes and updated caption |
+| Reduced motion | Plate animation computes to none |
+| Mobile caption | Block layout confirmed after fixing a utility-class collision found during visual review |
+| Overflow | Existing checks pass at all four browser profiles |
+| Formatting and diff whitespace | Passed |
+
+Exact verification: `pnpm --filter @cookthis/web build`; against a running production preview, `E2E_EXTERNAL=1 E2E_BASE_URL=http://localhost:3203 pnpm exec playwright test tests/e2e/recipes.spec.ts -g 'home is usable|social links offer'`. The same suite ran in the Playwright v1.64.0 Noble container for Linux snapshots. Standalone browser checks verified reduced motion and mobile caption layout.
+
+## Deployment
+
+Deployed cb25763 through infra/update.sh, exit status 0. Container health checks passed. HTTPS /healthz returned status ok and modelConfigured true. A fresh live mobile browser confirmed all three illustrations loaded, six plates appeared after selecting six people, the caption updated, and reduced motion disabled the entrance animation. The server checkout is clean. Production .env bytes, permissions and modification time are unchanged.
+
+## Scope and next step
+
+This is a presentation update. No changes to model extraction, payments, grocery APIs or production credentials. No purchases or live extractions performed. Conversion improvement is not measured. Next: try changing the guest count on the home page and paste your next recipe link. Earlier operational limitations are retained below.
+
+## Historical checkpoints
+
 # Cookthis checkpoint: a new first impression
 
 13 October 2026. Application commit 4b0b8fb.
