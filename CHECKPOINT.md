@@ -1,3 +1,54 @@
+# Cookthis checkpoint: Amazon Fresh live US option
+
+Date: 2026-10-13 UTC
+Live site: https://cookthis.app/
+Application commit: d4befea, pushed to the private application repository and deployed with infra/update.sh.
+
+## What changed
+
+- Set AMAZON_ASSOCIATE_TAG in the production environment. Both running web and worker containers were verified to have the intended US tag. Other production environment values are unchanged, the file remains mode 600 and untracked.
+- Added the original Amazon Fresh logo beside Kroger on the home page. Both home-page logos remain non-clickable.
+- US shopping lists now offer selectable Kroger and Amazon Fresh logo buttons. Amazon Fresh opens ingredient searches, not a prefilled cart.
+- The Shop flow displays the Amazon Associate disclosure and the statement that prices and checkout are the grocer's.
+- UK Amazon attribution requires a separate optional AMAZON_ASSOCIATE_TAG_UK. The US tag is never applied to UK links. UK Amazon remains unavailable until configured.
+- Logo source: https://advertising.amazon.com/resources/ad-specs/fresh . Original colors and proportions retained; optimized to a 22,012-byte image.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Grocery unit tests | 18 passed |
+| macOS browser checks | 12 passed |
+| Linux browser checks | 12 passed |
+| Phone/tablet, light/dark visual baselines | Home refreshed and Amazon Shop added |
+| Application and test type checks | Passed |
+| Web and worker production build | Passed |
+| Production infra/update.sh | Completed successfully |
+| Running web and worker US tag | Correct in both |
+| Production health endpoint | HTTP success, status ok |
+| Production Git checkout | d4befea, clean |
+| Real anonymous production Shop flow | Passed using Cookthis test recipe Paprika potatoes |
+| Amazon disclosure | Visible before link creation |
+| Production ingredient click endpoint | HTTP 200 |
+| Live destination | https://www.amazon.com/s?i=amazonfresh&k=potato&tag=cookthis0e-20 |
+| Purchase | None made |
+
+Exact taps: open a recipe, review its details, choose Shop, Open grocery list, the Amazon Fresh logo, Find these ingredients, then an ingredient.
+
+## Failures resolved and limits
+
+The first production browser check ran during the service restart and saw a temporary Cloudflare 502. The deployment then completed and health passed. A second browser check reached the ingredient click but could not read its response after navigation. The verification harness was adjusted to capture the response before navigation; the final complete run passed. A local browser test locator was also corrected before the final passing suites.
+
+The production checks generated anonymous test shopping records and operational test clicks. They did not modify a signed-in household or make a purchase. Tagged search links do not prove commission eligibility or an attributed order; those depend on Amazon's programme and reporting. No claim is made that every ingredient is stocked or matched. Amazon navigation was intercepted after capturing the production destination to avoid checkout.
+
+No blocker remains for this requested US Amazon Fresh setup. Next: ordinary household use and affiliate reporting, with no purchase performed by this task.
+
+---
+
+# Historical checkpoints
+
+The following earlier results are retained as historical context, not newly rerun checks.
+
 # Cookthis checkpoint: compact appearance control and more food artwork
 
 13 October 2026. Application commit d9a950b.
