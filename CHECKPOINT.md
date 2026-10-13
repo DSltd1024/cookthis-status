@@ -1,3 +1,47 @@
+# Cookthis checkpoint: a new first impression
+
+13 October 2026. Application commit 4b0b8fb.
+
+## What changed
+
+The home page now opens with “Saved it. Now cook it.” in a bold AKA blue composition. The paste form sits beside the promise on desktop and follows it on phones. Visitors without a link can open the original paprika-potatoes test recipe immediately.
+
+Steps remain before recipes. A new interactive recipe receipt lets visitors switch between two, four and six servings and see quantities and the calculation update. It is explicitly labelled as an original Cookthis test recipe, not a fabricated extraction. Kroger stays prominent and non-clickable. The existing light, dark and system appearance choices remain available.
+
+The design uses the verified AKA Outfit font and original source palette. A scoped refresh checked the known BrandBook folder and newer search results; no replacement core guide was established. No unrelated campaign identity was imported.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Web TypeScript | Passed |
+| Production Next.js build | Passed |
+| macOS browser checks | 8 passed, phone/tablet in light/dark |
+| Linux browser checks | 8 passed, phone/tablet in light/dark |
+| Visual baselines | Eight home baselines regenerated and rechecked against production build |
+| Anonymous entry and examples | Visible, three labelled test-recipe links |
+| Servings preview | Six servings shows 1,200 g potatoes and multiplier 1.5 |
+| Caption fallback | Link/caption preserved after simulated API error |
+| Horizontal overflow | None at tested phone/tablet sizes and 1440 px desktop |
+| Formatting and diff whitespace | Passed |
+| Appearance switching | Four browser checks passed, choice persists across navigation and reload |
+
+Exact local verification commands: `pnpm --filter @cookthis/web typecheck`; `pnpm --filter @cookthis/web build`; against a running production preview, `E2E_EXTERNAL=1 E2E_BASE_URL=http://localhost:3201 pnpm exec playwright test tests/e2e/recipes.spec.ts -g 'home is usable|social links offer'`. Linux uses Playwright v1.64.0 Noble with the same focused suite.
+
+## Scope and limitations
+
+This is a home-page redesign, not a change to extraction, billing or grocery ordering. Browser failure-handling checks deliberately simulate an extraction error; no live provider extraction or purchase was performed. Increased visitor conversion is an intention, not a measured result. Earlier operational limitations remain in the historical checkpoints below.
+
+## Deployment verification
+
+Deployed through the private repository using infra/update.sh. Exit status 0. Production is at 4b0b8fb with a clean checkout. All containers reported healthy. https://cookthis.app/healthz returned status ok and modelConfigured true over valid HTTPS.
+
+A real browser opened https://cookthis.app, verified the new heading, changed the recipe preview to six servings and confirmed 1,200 g potatoes. The Kroger logo is still non-clickable. Production .env bytes, permissions and modification time remain unchanged.
+
+Next: try the new opening on your phone, paste a real recipe link, and assess actual visitor behavior before making conversion claims. Existing extraction and grocery acceptance limitations are unchanged.
+
+## Historical checkpoints
+
 # Cookthis checkpoint: private source repository and Git-based production updates
 
 13 October 2026. Source commit 00c3081.
