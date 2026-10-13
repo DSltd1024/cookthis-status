@@ -1,3 +1,45 @@
+# Cookthis checkpoint: from your feed to dinner
+
+13 October 2026. Application commit 800ec21.
+
+## What changed
+
+Instagram, TikTok, YouTube and Facebook glyphs now sit above the paste form. Rounded mint arrows converge into the input. Beneath the form, illustrated recipe, grocery basket and dinner plate outcomes show the next steps. The original food artwork remains alongside the headline.
+
+The creative direction uses one readable path rather than separate feature claims. Platform glyph geometry and supplied colors remain intact; surrounding shapes, arrows and outcome icons use AKA colors. Self-hosted glyphs total less than 4 KB. Asset provenance is recorded with the source. No external creative director was consulted; the design-critique skill was used for hierarchy, readability and responsive review.
+
+Facebook is marked link plus caption. Pasting a Facebook link reveals a required caption field and explicitly says the video is not read. The existing pasted-caption extraction path is used and all quantities retain the existing guess treatment. This does not add direct Facebook video fetching. No social-platform partnership is implied.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Production web build and type validation | Passed |
+| macOS browser checks | 12 passed |
+| Linux browser checks | 12 passed |
+| Visual coverage | Home phone/tablet, light/dark, eight updated and rechecked baselines |
+| Platform assets | Four glyphs visible and loaded |
+| Facebook caption | Required before submit; link and caption sent to extraction request |
+| Existing Instagram caption fallback | Passed |
+| Servings and table preview | Passed |
+| Responsive width | No horizontal overflow in four browser profiles |
+| Desktop and phone visual review | Completed |
+| Formatting and diff whitespace | Passed |
+
+The first new Facebook test failed because its alert selector also matched Next.js's route announcer. The selector was narrowed to main; the unchanged application behavior then passed all four profiles on both platforms.
+
+Commands: `pnpm --filter @cookthis/web build`; `E2E_EXTERNAL=1 E2E_BASE_URL=http://localhost:3204 pnpm exec playwright test tests/e2e/recipes.spec.ts -g 'home is usable|social links offer|Facebook asks'`. Linux checks used the same suite with Playwright v1.64.0 Noble. Error handling used an intercepted extraction response; no provider charge or live extraction is claimed.
+
+## Deployment
+
+Deployed 800ec21 with infra/update.sh, exit status 0. Container health checks passed and HTTPS /healthz returned status ok and modelConfigured true. A fresh mobile browser on production confirmed four loaded platform glyphs, the dinner outcome flow and the required Facebook caption field. No extraction was submitted during the live check. Production .env contents, permissions and modification time are unchanged; the server Git checkout is clean.
+
+## Limitations and next
+
+Direct Facebook video extraction is not supported. Users must paste the recipe caption. This release changes the home-page explanation and adds client-side caption guidance, not model or grocery integrations. No purchases or account changes were made. Next: try the visible source-to-dinner flow and check it with a recipe from your saved posts. Earlier operational limitations remain recorded below.
+
+## Historical checkpoints
+
 # Cookthis checkpoint: food, color and a little play
 
 13 October 2026. Application commit cb25763.
