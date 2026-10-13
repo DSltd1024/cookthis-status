@@ -1,3 +1,44 @@
+# Cookthis checkpoint: smaller opening, same design
+
+13 October 2026. Application commit 2a551a9.
+
+## What changed
+
+Compacted the home-page blue section with CSS sizing and spacing only. Reduced heading, sticker and outcome-icon sizes, form padding, empty space and home-page header padding. All graphic files, artwork paths, text and application behavior are unchanged. Submit and other interactive controls retain at least 48 px target height.
+
+## Measured layout
+
+| Viewport | Hero height | Hero bottom | Submit button bottom | Result |
+| --- | ---: | ---: | ---: | --- |
+| 1366 × 768 | 666 px | 767 px | 491 px | Full blue section above fold |
+| 390 × 844 | 969 px | 1110 px | 803 px | Paste and submit visible without scrolling |
+
+For comparison, the preceding live version measured 972 px hero height at 1440 px width and 1395 px at 390 px. The complete phone hero intentionally still scrolls; content was not hidden or shrunk to illegibility. Measurements are at default browser zoom and depend on viewport/font settings.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Production web build/type validation | Passed |
+| macOS phone/tablet light/dark browser suite | 12 passed |
+| Linux phone/tablet light/dark browser suite | 12 passed |
+| Baselines | Eight home snapshots refreshed; macOS recheck passed |
+| Fold measurements | Automated bounds assertions passed for desktop hero and phone submit |
+| Visual inspection | Desktop and phone checked |
+| Diff whitespace | Passed |
+
+Commands: `pnpm --filter @cookthis/web build`; `E2E_EXTERNAL=1 E2E_BASE_URL=http://localhost:3208 pnpm exec playwright test tests/e2e/recipes.spec.ts -g 'home is usable|social links offer|Facebook asks'`. Linux used Playwright v1.64.0 Noble. No live extraction or purchase was performed.
+
+## Deployment
+
+Deployed 2a551a9 with infra/update.sh, exit status 0. Container health checks passed; HTTPS /healthz returned status ok and modelConfigured true. Fresh live browser measurements exactly matched the table above for desktop and phone. Production .env contents, permissions and modification time are unchanged, and the server Git checkout is clean.
+
+## Next and limitations
+
+Refresh the home page to see the tighter opening. No business behavior changed. The Facebook caption requirement and earlier operational limitations remain as recorded below.
+
+## Historical checkpoints
+
 # Cookthis checkpoint: AKA platform stickers and playful arrows
 
 13 October 2026. Application commit b5a8575.
