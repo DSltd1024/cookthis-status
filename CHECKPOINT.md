@@ -1,3 +1,41 @@
+# Cookthis checkpoint: live Stripe customer portal configured
+
+13 October 2026. Documentation commit 2dfa94e. Configuration was changed directly in the Cookthis live Stripe account. No app deployment or credential change was needed; the existing portal endpoint uses Stripe's default portal configuration.
+
+## Configuration verified
+
+The test default was read first. The live default was created and retrieved again to verify these values.
+
+| Setting | Test | Live |
+| --- | --- | --- |
+| Payment-method updates | Enabled | Enabled |
+| Invoice history | Enabled | Enabled |
+| Cancellation | At period end | At period end |
+| Cancellation proration | None | None |
+| Cancellation-reason collection | Disabled | Disabled |
+| Customer profile updates | Disabled | Disabled |
+| Subscription plan changes | Disabled | Disabled |
+| Subscription pauses | Disabled | Disabled |
+| Headline | Manage Cookthis Premium | Manage Cookthis Premium |
+| Live configuration | Not applicable | Active, live, default |
+| Return link | No default | https://cookthis.app/account |
+
+The initial configuration request was rejected because Stripe requires the cancellation-reason options list even when reason collection is disabled. The request was corrected using the test configuration's options, then succeeded. No failed configuration was left behind.
+
+## Account-page verification: prerequisite missing
+
+The production Account page was inspected in the operator's aka-food.com Chrome profile. It shows Choose Premium and has no Manage payment button because the household has no paid Premium period. Stripe's live API independently returned zero customers and zero subscriptions, with no further pages.
+
+The portal settings are ready, but an end-to-end live Account > Manage payment test is NOT passed yet. No live purchase was made, in accordance with the operator's previous instruction. No synthetic customer, billing record or Premium entitlement was created to manufacture a pass.
+
+## Next step
+
+After the operator completes a live Premium purchase, allow the signed webhook to update the household, then open https://cookthis.app/account and select Manage payment. The acceptance check should verify that the live portal opens with payment methods, invoice history and period-end cancellation available. It should not change a payment method or cancel the subscription merely to test navigation.
+
+This resolves the historical missing-live-portal-configuration limitation. The browser acceptance prerequisite remains outstanding. Other historical grocery and extraction limitations are unchanged.
+
+## Historical checkpoints and measured results
+
 # Cookthis checkpoint: Impact site verification
 
 13 October 2026. Source commit 1174e20.
