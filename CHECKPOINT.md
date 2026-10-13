@@ -1,27 +1,23 @@
 # For Claude
 
-Status: A private pinned Claude and Codex coordination board is created in the Cookthis GitHub repository, with local instructions committed and pushed.
-Blocked on: No blocker to using the issue-based board; native GitHub Projects needs an additional project permission. Previous live-acceptance and Sentry email blockers remain unresolved.
-Proposed next: Claude should read CLAUDE.md and the board, then post its handoff using the documented author and next-owner fields.
+Status: Claude Code successfully read and posted twice on the private board; Codex read both messages and replied, confirming two-way communication.
+Blocked on: No board-access blocker for local Claude Code; cloud Claude still lacks a GitHub connection. Previous live-acceptance and Sentry-email blockers remain.
+Proposed next: David chooses the next work item; Claude proposed a read-only text-reference audit and video-review checklist, not yet assigned.
 
-# Cookthis checkpoint: assistant coordination board
+# Cookthis checkpoint: board connection confirmed
 
 Board: https://github.com/DSltd1024/cookthis/issues/1
-Source documentation commit: d0cba02.
 
-The board is a pinned issue in the private application repository. It supports threaded comments and separate task issues labeled agent-coordination, needs-codex and needs-claude. Both assistants use the same GitHub account, so each message must identify its author.
-
-CLAUDE.md now tells Claude on this machine where to find the board and gives exact read and reply commands. AGENTS.md gives Codex matching instructions. The board includes current handoff context and checkpoint links. Each assistant checks it during work sessions and handoffs. Comments do not automatically wake either assistant; no background polling is configured.
-
-| Verification | Result |
+| Check | Result |
 |---|---|
-| Private application repository issue creation | Succeeded, issue 1 |
-| Pinned coordination board | Confirmed by GitHub CLI |
-| Coordination and next-owner labels | Created |
-| CLAUDE.md and AGENTS.md | Committed and pushed |
-| Native GitHub Projects | Current token lacks read:project permission; issue-based board provided instead |
-| Application or production changes | None, documentation only |
+| Claude Code reads board and local instructions | Confirmed in its board comments |
+| Claude Code posts replies | Two comments received |
+| Codex reads and responds | Reply posted successfully |
+| Working tree | Clean when checked |
+| Application or production changes | None |
 
-Agent messages provide context and proposals, not fresh authorization from David. The instructions prohibit credentials, private household data, raw logs and environment contents in comments, and require checking Git status and claiming files before concurrent work.
+Codex answered Claude's questions about fixture file ownership and independent ground truth. No files are currently claimed by Codex. Reviewing the existing caption and description references alone cannot establish independently reviewed video evidence. A reviewer needs access to the actual relevant media and must record evidence and uncertainty; merely filling a field or reusing extraction output is insufficient.
 
-Previous acceptance blockers remain: CI model access and independently reviewed video references, plus Sentry verification of the requested alert destination. The prior engineering rerun passed 323 unit tests and 86 browser checks; tests were not rerun locally for this documentation-only change.
+The board is now a working two-way channel for active sessions. It does not automatically wake either assistant. Timestamped checkpoint links remain the channel for cloud Claude, whose reader previously returned a stale copy of the fixed latest-checkpoint URL.
+
+No fixture review, production change or account-access change was assigned or performed during this board check. Existing blockers remain: CI model access, fully reviewed fixture references and verification of the requested Sentry alert inbox.
