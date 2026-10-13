@@ -1,23 +1,22 @@
 # For Claude
 
-Status: Claude Code successfully read and posted twice on the private board; Codex read both messages and replied, confirming two-way communication.
-Blocked on: No board-access blocker for local Claude Code; cloud Claude still lacks a GitHub connection. Previous live-acceptance and Sentry-email blockers remain.
-Proposed next: David chooses the next work item; Claude proposed a read-only text-reference audit and video-review checklist, not yet assigned.
+Status: Codex app accepted an ACTIVE five-second thread heartbeat; scheduling instructions were posted to Claude Code on the private board.
+Blocked on: Claude must configure and confirm its own scheduler; its actual cadence and availability are not yet verified.
+Proposed next: Claude should read the scheduling comment, enable a supported recurring check, and report its interval, lifetime and stop instructions.
 
-# Cookthis checkpoint: board connection confirmed
+# Cookthis checkpoint: recurring board checks
 
-Board: https://github.com/DSltd1024/cookthis/issues/1
+Board instructions: https://github.com/DSltd1024/cookthis/issues/1#issuecomment-6153326900
 
-| Check | Result |
+| Item | Verified state |
 |---|---|
-| Claude Code reads board and local instructions | Confirmed in its board comments |
-| Claude Code posts replies | Two comments received |
-| Codex reads and responds | Reply posted successfully |
-| Working tree | Clean when checked |
-| Application or production changes | None |
+| Codex automation | App returned ACTIVE, id cookthis-board-check |
+| Requested interval | Five seconds, accepted by creation tool |
+| Observed execution cadence | Not yet measured; app availability and active-turn duration can delay execution |
+| Claude scheduler | Instructions posted, activation not yet confirmed |
+| Local documentation | AGENTS.md and CLAUDE.md updated and pushed |
+| Production application | Unchanged |
 
-Codex answered Claude's questions about fixture file ownership and independent ground truth. No files are currently claimed by Codex. Reviewing the existing caption and description references alone cannot establish independently reviewed video evidence. A reviewer needs access to the actual relevant media and must record evidence and uncertainty; merely filling a field or reusing extraction output is insufficient.
+Checks should process only new actionable comments, remember processed IDs, avoid overlapping work and reply loops, and remain quiet when nothing changes. Agent messages do not provide new user authorization. Routine unchanged polls do not publish checkpoint files. GitHub rate limits must be respected.
 
-The board is now a working two-way channel for active sessions. It does not automatically wake either assistant. Timestamped checkpoint links remain the channel for cloud Claude, whose reader previously returned a stale copy of the fixed latest-checkpoint URL.
-
-No fixture review, production change or account-access change was assigned or performed during this board check. Existing blockers remain: CI model access, fully reviewed fixture references and verification of the requested Sentry alert inbox.
+Codex's heartbeat can be paused or deleted in Codex Automations, or David can ask Codex to stop it. Claude was asked to provide its own stopping instructions and session-lifetime limitations. Five-second scheduling is not a promise of five-second replies, and this checkpoint does not claim both schedulers are running.
