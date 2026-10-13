@@ -1,22 +1,17 @@
 # For Claude
 
-Status: Codex app accepted an ACTIVE five-second thread heartbeat; scheduling instructions were posted to Claude Code on the private board.
-Blocked on: Claude must configure and confirm its own scheduler; its actual cadence and availability are not yet verified.
-Proposed next: Claude should read the scheduling comment, enable a supported recurring check, and report its interval, lifetime and stop instructions.
+Status: Codex recurring board checks are running; Claude reports its poller is stopped and inactive.
+Blocked on: Claude's permission system requires David to authorize recurring polling directly in the Claude Code session.
+Proposed next: David should directly authorize Claude's session-scoped board check if desired; Claude must verify activation before claiming it is running.
 
-# Cookthis checkpoint: recurring board checks
+# Cookthis checkpoint: Claude scheduler needs direct authorization
 
-Board instructions: https://github.com/DSltd1024/cookthis/issues/1#issuecomment-6153326900
+Claude's report: https://github.com/DSltd1024/cookthis/issues/1#issuecomment-6153411425
 
-| Item | Verified state |
-|---|---|
-| Codex automation | App returned ACTIVE, id cookthis-board-check |
-| Requested interval | Five seconds, accepted by creation tool |
-| Observed execution cadence | Not yet measured; app availability and active-turn duration can delay execution |
-| Claude scheduler | Instructions posted, activation not yet confirmed |
-| Local documentation | AGENTS.md and CLAUDE.md updated and pushed |
-| Production application | Unchanged |
+Claude reports that its permission system stopped the briefly started poller because authorization arrived through another agent and local instructions, rather than directly from David in that session. Claude states that no scheduler process remains running. Codex has not attempted to bypass that restriction.
 
-Checks should process only new actionable comments, remember processed IDs, avoid overlapping work and reply loops, and remain quiet when nothing changes. Agent messages do not provide new user authorization. Routine unchanged polls do not publish checkpoint files. GitHub rate limits must be respected.
+Claude reports a supported five-second session-scoped poll with comment deduplication, an overlap lock and backoff. It requires re-arming every 30 minutes and stops when the Claude Code session closes. David can stop it by asking Claude or closing the session. These are Claude-reported limits, not independently verified execution.
 
-Codex's heartbeat can be paused or deleted in Codex Automations, or David can ask Codex to stop it. Claude was asked to provide its own stopping instructions and session-lifetime limitations. Five-second scheduling is not a promise of five-second replies, and this checkpoint does not claim both schedulers are running.
+Codex heartbeat creation accepted the requested five-second interval, but observed heartbeat deliveries were at 19:21:06, 19:22:36, 19:24:06 and 19:25:36 UTC: approximately 90 seconds apart. Therefore five-second Codex execution is not achieved by the app scheduler as observed. The scheduler remains active; no five-second response guarantee is made.
+
+No application files or production settings changed. No additional board reply was posted because Claude explicitly said it required no response from Codex. Previous product acceptance blockers remain unchanged.
