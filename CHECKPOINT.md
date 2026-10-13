@@ -1,3 +1,50 @@
+# Cookthis checkpoint: AKA sticker style across the site
+
+13 October 2026. Application commit f332acc.
+
+## What changed
+
+Applied a shared AKA sticker design system across Cookthis: blue title panels, rounded pastel cards, bold outlines, offset shadows and matching buttons. The home-page recipe menu and numbered steps, saved kitchen, recipes, meal editor, grocery list, Plan, Cook, Helper, Account, sign-in, creator tools, operator panels, install/help/legal surfaces and footer now use the same design vocabulary.
+
+Ingredients use mint panels; methods have numbered stickers. Premium uses peach. Cooking instructions and timer surfaces match the rest of the app while working text stays upright. Gantt labels and timing bars stay in separate columns. Email preferences now have their own panel, and adjacent cooking links have spacing and usable touch targets. Dark-mode colors, reduced-motion preferences and print cleanup remain supported.
+
+The compact home hero and its artwork are retained. No business logic, database schema, provider configuration or payment behavior changed.
+
+## Verification
+
+| Check | Result |
+| --- | --- |
+| Production web build/type validation | Passed |
+| Test TypeScript | Passed |
+| macOS final browser run | 40 passed |
+| Linux final browser run | 40 passed |
+| Visual coverage | 14 screens, phone/tablet, light/dark, on both platforms |
+| Baselines | 112 screenshots updated or added and final no-update runs passed |
+| Gantt separation | Labels, bars and axis remain separated and aligned |
+| Theme persistence | Light, dark and system choice survive navigation/reload |
+| New surface checks | Kitchen, Account, sign-in and creator fixtures render without horizontal overflow |
+| Home fold | Hero ends at y=765 on 1366×768 viewport |
+| Recipe Shop target | 56 px tall, above 48 px minimum |
+| Formatting and diff whitespace | Passed |
+
+Commands: `pnpm --filter @cookthis/web build`; `pnpm exec tsc --noEmit -p tsconfig.tests.json`; `E2E_EXTERNAL=1 E2E_BASE_URL=http://localhost:3210 pnpm exec playwright test -g 'home is usable|original recipe shows|meal layout|shopping layout|plan and cook screens|helper and second screen|launch pages make|phone sharing opens|share the sticker system|appearance overrides'`. Linux ran the same suite in Playwright v1.64.0 Noble.
+
+## Initial failures, resolved
+
+The new creator fixture omitted its claims array; corrected the test data. An early preview was rebuilt while the first visual run was still reading assets, causing missing-style and navigation failures. Those runs were discarded. A fresh server against the completed final build passed all 40 checks per platform, then passed again without updating baselines. Visual review also led to spacing fixes for cooking links and a proper email-preferences panel.
+
+## Deployment
+
+Deployed f332acc with infra/update.sh, exit status 0. HTTPS /healthz returns status ok and modelConfigured true. Live mobile browser checks passed for Recipe, sign-in, install, privacy and creator pages: the new shared stylesheet is present and there is no horizontal overflow. The live recipe also passed dark-mode background and panel checks. Production .env contents, permissions and modification time are unchanged. The server checkout is clean on main at origin/main.
+
+## Limits and next step
+
+Authenticated screen visuals use controlled local API fixtures, not changes to the operator's production household. The live authenticated operator dashboard was not independently exercised; it inherits the shared workspace/panel/table styles. This was not a new end-to-end purchase, grocery cart or live extraction acceptance run. No purchase or message was sent. Earlier operational limitations remain recorded below.
+
+Next: open a recipe, Your kitchen and a saved meal on the live site to see the shared style through the complete journey.
+
+## Historical checkpoints
+
 # Cookthis checkpoint: smaller opening, same design
 
 13 October 2026. Application commit 2a551a9.
