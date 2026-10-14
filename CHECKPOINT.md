@@ -1,17 +1,30 @@
 # For Claude
 
-Status: Codex recurring board checks are running; Claude reports its poller is stopped and inactive.
-Blocked on: Claude's permission system requires David to authorize recurring polling directly in the Claude Code session.
-Proposed next: David should directly authorize Claude's session-scoped board check if desired; Claude must verify activation before claiming it is running.
+Status: Claude finished a read-only text audit of the 20 extraction fixtures and posted the findings and video-review checklists on private task issue 2.
+Blocked on: Acceptance still needs independent video review of all 20 fixtures, features tagging and David's decision on the proposed fixture fixes; the model secret and Sentry email blockers are unchanged.
+Proposed next: David picks the video reviewer and decides whether to apply the fixture fixes; Codex checks the audit findings on issue 2.
 
-# Cookthis checkpoint: Claude scheduler needs direct authorization
+# Cookthis checkpoint: fixture reference text audit
 
-Claude's report: https://github.com/DSltd1024/cookthis/issues/1#issuecomment-6153411425
+David approved this task directly in the Claude session. Claude compared each fixture in `tests/fixtures/videos.json` with the text source it cites: the YouTube description, the linked recipe page or the caption. **This is not video ground truth.** No fixture was promoted to `reviewed`, and no repository files changed. The application repository is unchanged at b011cd2, and tests were not run because nothing changed.
 
-Claude reports that its permission system stopped the briefly started poller because authorization arrived through another agent and local instructions, rather than directly from David in that session. Claude states that no scheduler process remains running. Codex has not attempted to bypass that restriction.
+| Result | Count |
+|---|---|
+| Fixtures audited against cited text | 20 of 20 (one linked recipe page couldn't be fetched, so its quantities are unverified) |
+| No discrepancy against cited text | 4 |
+| No ingredients, and the text source can't supply any | 4 (video is the only possible source) |
+| Fixtures with proposed fixes or video checks | 12 |
+| Fixtures with a `features` tag | 0 of 20 |
+| Fixtures with reviewed status | 0 of 20 |
 
-Claude reports a supported five-second session-scoped poll with comment deduplication, an overlap lock and backoff. It requires re-arming every 30 minutes and stops when the Claude Code session closes. David can stop it by asking Claude or closing the session. These are Claude-reported limits, not independently verified execution.
+Key findings:
+- The live acceptance gate will still block after all 20 videos are reviewed, because no fixture has a `features` tag. The gate needs reviewed fixtures tagged caption-complete, ocr-only, narration, two-dish, metric and imperial.
+- Two fixtures mark add-in or garnish ingredients as required, which would penalise a correct extraction of the main recipe.
+- Two caption sources contain conflicting amounts ("½ cup or 50 ml", "1 cup/50gm"). The fixture keeps one of the two values, which the video review should settle.
+- The AI-generated recipes on the third-party caption mirror contradict the captions in several places. The fixtures correctly follow the captions.
 
-Codex heartbeat creation accepted the requested five-second interval, but observed heartbeat deliveries were at 19:21:06, 19:22:36, 19:24:06 and 19:25:36 UTC: approximately 90 seconds apart. Therefore five-second Codex execution is not achieved by the app scheduler as observed. The scheduler remains active; no five-second response guarantee is made.
+The full table and per-fixture checklists are on private issue 2 in the application repository. No fixture fixes were applied.
 
-No application files or production settings changed. No additional board reply was posted because Claude explicitly said it required no response from Codex. Previous product acceptance blockers remain unchanged.
+Recurring board polling on Claude's side is not active. It needs David's direct authorization in the Claude Code session.
+
+Next: David chooses the video reviewer and decides on the fixture fixes. Codex reviews the findings. The live extraction model secret and the Sentry alert email approval remain outstanding.
